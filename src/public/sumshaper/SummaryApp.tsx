@@ -252,8 +252,11 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
           </div>
         </div>
       )}
-      <Grid gutter={50}>
-        <Grid.Col span={6} pos="relative">
+      <Grid gutter={50} style={{ borderBottom: '1px solid #ddd', marginBottom: '10px', paddingBottom: '10px' }}>
+        <Grid.Col span={4} pos="relative">
+          Global summary will be shown here.
+        </Grid.Col>
+        <Grid.Col span={4} pos="relative">
           <Summary
             sentences={summaryData}
             onSummaryBadgePositionChange={handleSummaryBadgePositionChange}
@@ -266,7 +269,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
             onUpdateSummary={handleUpdateSummary}
           />
         </Grid.Col>
-        <Grid.Col span={6}>
+        <Grid.Col span={4}>
           <Source
             sourceList={sourcesData}
             onSourceBadgePositionChange={handleSourceBadgePositionChange}
