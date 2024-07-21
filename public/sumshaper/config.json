@@ -53,12 +53,6 @@
             "nextButtonText": "Begin",
             "response": []
         },
-        "feedback-tutorial": {
-            "type": "markdown",
-            "path": "sumshaper/assets/feedback-tutorial.md",
-            "nextButtonText": "Continue",
-            "response": []
-        },
         "sumshaper1": {
             "baseComponent": "summarySource",
             "instruction": "",
