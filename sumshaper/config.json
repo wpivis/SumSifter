@@ -53,7 +53,7 @@
             "nextButtonText": "Begin",
             "response": []
         },
-        "sumshaper1": {
+        "summshaper1": {
             "baseComponent": "summarySource",
             "instruction": "",
             "parameters": {
@@ -71,7 +71,7 @@
             {
                 "order": "random",
                 "components": [
-                    "sumshaper1"
+                    "summshaper1"
                 ]
             }
         ]
