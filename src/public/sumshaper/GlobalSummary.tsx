@@ -9,15 +9,17 @@ import style from './sumsifter.module.css';
 import { SumContent } from './types';
 
 interface GlobalSummaryProps {
+  conversationId: string;
   sentences: SumContent[];
   onSourceClick: (summaryBlockId: string | null, documentId: string | null) => void;
-  onSubmitQuery: (queryText: string) => void;
+  onSubmitQuery: (conversationId: string, queryText: string) => void;
   queryText: string;
   onQueryTextChange: (queryText: string) => void;
   onUpdateSummary: (text: string, prompt: string) => void;
 }
 
 function GlobalSummary({
+  conversationId,
   sentences,
   onSourceClick,
   onSubmitQuery,
@@ -193,7 +195,7 @@ function GlobalSummary({
 
         <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
           <Textarea minRows={1} maxRows={4} autosize placeholder="Type your query here." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
-          <Button onClick={() => { onSubmitQuery(queryText); }}>Send</Button>
+          <Button onClick={() => { onSubmitQuery(conversationId, queryText); }}>Send</Button>
         </Box>
       </div>
     </ScrollArea>

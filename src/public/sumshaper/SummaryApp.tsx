@@ -24,6 +24,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [queryText, setQueryText] = useState('');
+  const [globalQueryText, setGlobalQueryText] = useState('');
 
   const [globalSummary, setGlobalSummary] = useState<SumGlobalSummary | null>(null);
   const [localSummaries, setLocalSummaries] = useState<SumSummary[]>([]);
@@ -129,7 +130,37 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     setSourceBadgeLeft(left);
   }, []);
 
-  const handleSubmitQuery = useCallback((conversationId: string, queryPrompt: string) => {
+  const handleSubmitGlobalQuery = useCallback((conversationId: string, queryPrompt: string) => {
+    async function fetchData() {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId,
+          documentIds: [],
+          promptType: 'general',
+          prompt: queryPrompt,
+        }),
+      });
+
+      const { summary, conversationId: globalConversationId } = await response.json();
+
+      setGlobalSummary({
+        content: summary,
+        id: 0,
+        conversationId: globalConversationId,
+      });
+
+      setIsLoading(false);
+    }
+
+    fetchData();
+  }, []);
+
+  const handleSubmitLocalQuery = useCallback((conversationId: string, queryPrompt: string) => {
     async function fetchData() {
       const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
         method: 'POST',
@@ -271,10 +302,11 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         <Grid.Col span={4} pos="relative">
           {globalSummary && (
             <GlobalSummary
+              conversationId={globalSummary.conversationId}
               sentences={globalSummary.content}
-              onQueryTextChange={() => {}}
-              queryText=""
-              onSubmitQuery={() => {}}
+              onQueryTextChange={setGlobalQueryText}
+              queryText={globalQueryText}
+              onSubmitQuery={handleSubmitGlobalQuery}
               onSourceClick={(_, docSummaryId) => {
                 if (docSummaryId) {
                   const documentId = +docSummaryId - 1;
@@ -318,7 +350,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
               onSourceClick={handleSourceClick}
               activeSummaryId={activeSummaryBlockId}
               activeSourceId={activeSourceBlockId}
-              onSubmitQuery={handleSubmitQuery}
+              onSubmitQuery={handleSubmitLocalQuery}
               queryText={queryText}
               onQueryTextChange={setQueryText}
               onUpdateSummary={handleUpdateSummary}
