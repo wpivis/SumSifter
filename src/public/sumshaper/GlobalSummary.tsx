@@ -10,7 +10,7 @@ import { SumContent } from './types';
 
 interface GlobalSummaryProps {
   sentences: SumContent[];
-  onSourceClick: (summaryId: string | null, sourceId: string | null) => void;
+  onSourceClick: (summaryBlockId: string | null, documentId: string | null) => void;
   onSubmitQuery: (queryText: string) => void;
   queryText: string;
   onQueryTextChange: (queryText: string) => void;
@@ -120,7 +120,7 @@ function GlobalSummary({
   }, [onSourceClick]);
 
   return (
-    <ScrollArea style={{ height: 'calc(100vh - 150px)' }} pos="relative" viewportRef={ref}>
+    <ScrollArea style={{ height: 'calc(100vh - 160px)' }} pos="relative" viewportRef={ref}>
       <div ref={contentRef} style={{ position: 'relative' }}>
         {/* background highlight */}
         {highlightClientRects && (

@@ -16,18 +16,14 @@ import GlobalSummary from './GlobalSummary';
 const API_BASE_URL = import.meta.env.VITE_SUMSIFTER_API_URL;
 
 function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
-  const [activeSummaryId, setActiveSummaryId] = useState<string | null>(null);
-  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
-
-  const [summaryData, setSummaryData] = useState<{ id: string; text: string; sources: string[] }[]>([]);
-
-  const [sourcesData, setSourcesData] = useState<{ id: string; text: string }[]>([]);
+  const [activeSummaryBlockId, setActiveSummaryBlockId] = useState<string | null>(null);
+  const [activeSourceBlockId, setActiveSourceBlockId] = useState<string | null>(null);
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [summaryBadgeTop, setSummaryBadgeTop] = useState(0);
   const [sourceBadgeTop, setSourceBadgeTop] = useState(0);
   const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [queryText, setQueryText] = useState('');
 
   const [globalSummary, setGlobalSummary] = useState<SumGlobalSummary | null>(null);
@@ -38,7 +34,10 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
   // const [documentIds, setDocumentIds] = useState<string[]>([]);
 
-  const { prompt: defaultPrompt, documents: documentIds } = parameters;
+  const { prompt: defaultPrompt, documents: _documentIds } = parameters;
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const documentIds = useMemo(() => _documentIds, []);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -84,14 +83,14 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
       setGlobalSummary({
         content: summary,
-        id: 'global',
+        id: 0,
         conversationId: globalConversationId,
       });
 
       const sourceList: SumSource[] = [];
       const summaryList: SumSummary[] = [];
 
-      individualDocuments.forEach(({ conversationId: docConversationId, source, summary: docSummary }: {conversationId: string, source: { id: string, text: string, sources: string[] }[], summary: { id: string, text: string, sources: string[] }[]}, idx) => {
+      individualDocuments.forEach(({ conversationId: docConversationId, source, summary: docSummary }: {conversationId: string, source: { id: string, text: string, sources: string[] }[], summary: { id: string, text: string, sources: string[] }[]}, idx: number) => {
         sourceList.push({
           id: idx,
           content: source,
@@ -105,7 +104,6 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
       setLocalSummaries(summaryList);
       setSources(sourceList);
-
       setIsLoading(false);
     }
 
@@ -121,8 +119,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       answers: {},
     });
 
-    setActiveSourceId(sourceId);
-    setActiveSummaryId(summaryId);
+    setActiveSummaryBlockId(summaryId);
+    setActiveSourceBlockId(sourceId);
   }, [actions, trrack, setAnswer]);
 
   const handleSummaryBadgePositionChange = useCallback((top: number) => {
@@ -162,8 +160,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         text: sourceObj.text,
       }));
 
-      setSummaryData(summary);
-      setSourcesData(source);
+      // setSummaryData(summary);
+      // setSourcesData(source);
       setIsLoading(false);
     }
 
@@ -199,8 +197,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         text: sourceObj.text,
       }));
 
-      setSummaryData(summary);
-      setSourcesData(source);
+      // setSummaryData(summary);
+      // setSourcesData(source);
       setIsLoading(false);
     }
 
@@ -236,13 +234,19 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         text: sourceObj.text,
       }));
 
-      setSummaryData(summary);
-      setSourcesData(source);
+      // setSummaryData(summary);
+      // setSourcesData(source);
       setIsLoading(false);
     }
 
     fetchData();
   }, [conversationId]);
+
+  const updateActiveDocumentId = useCallback((documentId: number) => {
+    setActiveDocumentId(documentId);
+    setActiveSummaryBlockId(null);
+    setActiveSourceBlockId(null);
+  }, []);
 
   return (
     <>
@@ -283,7 +287,12 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
               onQueryTextChange={() => {}}
               queryText=""
               onSubmitQuery={() => {}}
-              onSourceClick={() => {}}
+              onSourceClick={(_, docSummaryId) => {
+                if (docSummaryId) {
+                  const documentId = +docSummaryId - 1;
+                  updateActiveDocumentId(documentId);
+                }
+              }}
               onUpdateSummary={() => {}}
             />
           )}
@@ -300,11 +309,14 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
                     borderRadius: 5,
                     padding: 5,
                     margin: 5,
+                    width: 100,
+                    textAlign: 'center',
                     cursor: 'pointer',
                   }}
-                  onClick={() => setActiveDocumentId(summary.id)}
+                  onClick={() => updateActiveDocumentId(summary.id)}
                 >
                   Doc
+                  {' '}
                   {idx + 1}
                 </Box>
               ))}
@@ -315,8 +327,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
               sentences={localSummaries[activeDocumentId].content}
               onSummaryBadgePositionChange={handleSummaryBadgePositionChange}
               onSourceClick={handleSourceClick}
-              activeSummaryId={activeSummaryId}
-              activeSourceId={activeSourceId}
+              activeSummaryId={activeSummaryBlockId}
+              activeSourceId={activeSourceBlockId}
               onSubmitQuery={handleSubmitQuery}
               queryText={queryText}
               onQueryTextChange={setQueryText}
@@ -329,13 +341,13 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
             <Source
               sourceList={sources[activeDocumentId].content}
               onSourceBadgePositionChange={handleSourceBadgePositionChange}
-              activeSourceId={activeSourceId}
+              activeSourceId={activeSourceBlockId}
               onAddToSummary={handleAddToSummary}
             />
           )}
         </Grid.Col>
       </Grid>
-      {activeSourceId && (
+      {activeSourceBlockId && (
         <div style={{
           position: 'fixed',
           top: (summaryBadgeTop > sourceBadgeTop ? sourceBadgeTop : summaryBadgeTop) + 18,

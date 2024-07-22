@@ -196,7 +196,7 @@ function Source({
 
   return (
     <>
-      <ScrollArea style={{ height: 'calc(100vh - 150px)' }} pos="relative" viewportRef={ref}>
+      <ScrollArea style={{ height: 'calc(100vh - 160px)' }} pos="relative" viewportRef={ref}>
         <div ref={contentRef} style={{ position: 'relative' }}>
           {highlightClientRects && (
             <div className={style.textHighlightContainer}>

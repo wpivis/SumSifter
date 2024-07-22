@@ -150,7 +150,7 @@ function Summary({
   }, [onSourceClick, onSummaryBadgePositionChange]);
 
   return (
-    <ScrollArea style={{ height: 'calc(100vh - 150px)' }} pos="relative" viewportRef={ref}>
+    <ScrollArea style={{ height: 'calc(100vh - 220px)' }} pos="relative" viewportRef={ref}>
       <div ref={contentRef} style={{ position: 'relative' }}>
         {/* background highlight */}
         {highlightClientRects && (
@@ -169,7 +169,7 @@ function Summary({
             ))}
           </div>
         )}
-        <Title order={2} mb={16}>LLM-Generated Summary</Title>
+        <Title order={2} mb={16}>Document Summary</Title>
         <Box pos="relative">
           <Markdown
             data={sentences}
@@ -225,15 +225,17 @@ function Summary({
           <Textarea minRows={1} maxRows={4} autosize placeholder="Type your query here." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
           <Button onClick={() => { onSubmitQuery(queryText); }}>Send</Button>
         </Box>
-        <div style={{
-          position: 'fixed',
-          top: positionTop + 18,
-          left: positionLeftSummary + 5,
-          backgroundColor: 'var(--mantine-color-blue-5)',
-          height: 2,
-          width: positionLeft - positionLeftSummary + 35,
-        }}
-        />
+        {activeSummaryId && (
+          <div style={{
+            position: 'fixed',
+            top: positionTop + 18,
+            left: positionLeftSummary + 5,
+            backgroundColor: 'var(--mantine-color-blue-5)',
+            height: 2,
+            width: positionLeft - positionLeftSummary + 35,
+          }}
+          />
+        )}
       </div>
     </ScrollArea>
   );
