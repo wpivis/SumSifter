@@ -2,7 +2,7 @@
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0/src/parser/GlobalConfigSchema.json",
     "configsList": [
         "sumsifter",
-        "sumshaper",
+        "summshaper",
         "sumsifter-memory-study-p1",
         "sumsifter-memory-study-p2",
         "sumsifter-chunking",
@@ -27,7 +27,7 @@
         "sumsifter": {
             "path": "sumsifter/config.json"
         },
-        "sumshaper": {
+        "summshaper": {
             "path": "sumshaper/config.json"
         },
         "sumsifter-memory-study-p1": {
