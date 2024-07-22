@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
-        "title": "SumShaper - Multiple Documents Feedback Study",
+        "title": "SummShaper - Multiple Documents Feedback Study",
         "version": "pilot",
         "authors": [
             "SCADS SumSifter Team"
