@@ -1,31 +1,40 @@
 import {
   memo, useCallback, useEffect, useMemo, useState,
 } from 'react';
-import { Grid, Loader } from '@mantine/core';
+import {
+  Box, Flex, Grid, Loader, ScrollArea,
+} from '@mantine/core';
 import { initializeTrrack, Registry } from '@trrack/core';
 import Summary from './Summary';
 import { StimulusParams } from '../../store/types';
-import { SumParams } from './types';
+import {
+  SumGlobalSummary, SumParams, SumSource, SumSummary,
+} from './types';
 import Source from './Source';
+import GlobalSummary from './GlobalSummary';
 
 const API_BASE_URL = import.meta.env.VITE_SUMSIFTER_API_URL;
 
 function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
-  const [activeSummaryId, setActiveSummaryId] = useState<string | null>(null);
-  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+  const [activeSummaryBlockId, setActiveSummaryBlockId] = useState<string | null>(null);
+  const [activeSourceBlockId, setActiveSourceBlockId] = useState<string | null>(null);
 
-  const [summaryData, setSummaryData] = useState<{ id: string; text: string; sources: string[] }[]>([]);
-
-  const [sourcesData, setSourcesData] = useState<{ id: string; text: string }[]>([]);
-
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [summaryBadgeTop, setSummaryBadgeTop] = useState(0);
   const [sourceBadgeTop, setSourceBadgeTop] = useState(0);
   const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [queryText, setQueryText] = useState('');
 
-  const { prompt: defaultPrompt, document: studyDocument } = parameters;
+  const [globalSummary, setGlobalSummary] = useState<SumGlobalSummary | null>(null);
+  const [localSummaries, setLocalSummaries] = useState<SumSummary[]>([]);
+  const [sources, setSources] = useState<SumSource[]>([]);
+
+  const [activeDocumentId, setActiveDocumentId] = useState<number | null>(null);
+
+  const { prompt: defaultPrompt, documents: _documentIds } = parameters;
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const documentIds = useMemo(() => _documentIds, []);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -54,40 +63,49 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
+      const response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           conversationId: null,
-          documentId: studyDocument,
+          documentIds,
           promptType: 'general',
           prompt: defaultPrompt,
         }),
       });
-      const data = await response.json();
 
-      setConversationId(data.conversationId);
+      const { summary, conversationId: globalConversationId, individualDocuments } = await response.json();
 
-      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
-        id: String(idx),
-        text: sentenceObj.text,
-        sources: sentenceObj.sources,
-      }));
+      setGlobalSummary({
+        content: summary,
+        id: 0,
+        conversationId: globalConversationId,
+      });
 
-      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
-        id: sourceObj.id,
-        text: sourceObj.text,
-      }));
+      const sourceList: SumSource[] = [];
+      const summaryList: SumSummary[] = [];
 
-      setSummaryData(summary);
-      setSourcesData(source);
+      individualDocuments.forEach(({ conversationId: docConversationId, source, summary: docSummary }: {conversationId: string, source: { id: string, text: string, sources: string[] }[], summary: { id: string, text: string, sources: string[] }[]}, idx: number) => {
+        sourceList.push({
+          id: idx,
+          content: source,
+        });
+        summaryList.push({
+          id: idx,
+          conversationId: docConversationId,
+          content: docSummary,
+        });
+      });
+
+      setLocalSummaries(summaryList);
+      setSources(sourceList);
       setIsLoading(false);
     }
 
     fetchData();
-  }, [defaultPrompt, studyDocument]);
+  }, [defaultPrompt, documentIds]);
 
   const handleSourceClick = useCallback((summaryId: string | null, sourceId: string | null) => {
     trrack.apply('Clicked', actions.mouseHoverAction({ summaryId, sourceId }));
@@ -98,8 +116,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       answers: {},
     });
 
-    setActiveSourceId(sourceId);
-    setActiveSummaryId(summaryId);
+    setActiveSummaryBlockId(summaryId);
+    setActiveSourceBlockId(sourceId);
   }, [actions, trrack, setAnswer]);
 
   const handleSummaryBadgePositionChange = useCallback((top: number) => {
@@ -111,9 +129,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     setSourceBadgeLeft(left);
   }, []);
 
-  const handleSubmitQuery = useCallback((queryPrompt: string) => {
+  const handleSubmitQuery = useCallback((conversationId: string, queryPrompt: string) => {
     async function fetchData() {
-      setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
         method: 'POST',
         headers: {
@@ -121,33 +138,30 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         },
         body: JSON.stringify({
           conversationId,
-          documentId: studyDocument,
+          documentId: null,
           promptType: 'general',
           prompt: queryPrompt,
         }),
       });
       const data = await response.json();
 
-      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
-        id: String(idx),
-        text: sentenceObj.text,
-        sources: sentenceObj.sources,
+      // update local summary
+      setLocalSummaries((prev) => prev.map((docSummary) => {
+        if (docSummary.conversationId === conversationId) {
+          return {
+            ...docSummary,
+            content: data.summary,
+          };
+        }
+        return docSummary;
       }));
-
-      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
-        id: sourceObj.id,
-        text: sourceObj.text,
-      }));
-
-      setSummaryData(summary);
-      setSourcesData(source);
       setIsLoading(false);
     }
 
     fetchData();
-  }, [studyDocument, conversationId]);
+  }, []);
 
-  const handleUpdateSummary = useCallback((summaryText: string, sourcePrompt: string) => {
+  const handleUpdateSummary = useCallback((conversationId: string, summaryText: string, sourcePrompt: string) => {
     async function fetchData() {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
@@ -157,7 +171,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         },
         body: JSON.stringify({
           conversationId,
-          documentId: studyDocument,
+          documentId: null,
           promptType: 'summary',
           summaryTargetText: summaryText,
           prompt: sourcePrompt,
@@ -165,26 +179,24 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       });
       const data = await response.json();
 
-      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
-        id: String(idx),
-        text: sentenceObj.text,
-        sources: sentenceObj.sources,
+      // update local summary
+      setLocalSummaries((prev) => prev.map((docSummary) => {
+        if (docSummary.conversationId === conversationId) {
+          return {
+            ...docSummary,
+            content: data.summary,
+          };
+        }
+        return docSummary;
       }));
 
-      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
-        id: sourceObj.id,
-        text: sourceObj.text,
-      }));
-
-      setSummaryData(summary);
-      setSourcesData(source);
       setIsLoading(false);
     }
 
     fetchData();
-  }, [conversationId, studyDocument]);
+  }, []);
 
-  const handleAddToSummary = useCallback((sourceText: string, sourcePrompt: string) => {
+  const handleAddToLocalSummary = useCallback((conversationId:string, sourceText: string, sourcePrompt: string) => {
     async function fetchData() {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
@@ -194,7 +206,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         },
         body: JSON.stringify({
           conversationId,
-          documentId: studyDocument,
+          documentId: null,
           promptType: 'source',
           sourceTargetText: sourceText,
           prompt: sourcePrompt,
@@ -202,24 +214,28 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       });
       const data = await response.json();
 
-      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
-        id: String(idx),
-        text: sentenceObj.text,
-        sources: sentenceObj.sources,
+      // update local summary
+      setLocalSummaries((prev) => prev.map((docSummary) => {
+        if (docSummary.conversationId === conversationId) {
+          return {
+            ...docSummary,
+            content: data.summary,
+          };
+        }
+        return docSummary;
       }));
 
-      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
-        id: sourceObj.id,
-        text: sourceObj.text,
-      }));
-
-      setSummaryData(summary);
-      setSourcesData(source);
       setIsLoading(false);
     }
 
     fetchData();
-  }, [conversationId, studyDocument]);
+  }, []);
+
+  const updateActiveDocumentId = useCallback((documentId: number) => {
+    setActiveDocumentId(documentId);
+    setActiveSummaryBlockId(null);
+    setActiveSourceBlockId(null);
+  }, []);
 
   return (
     <>
@@ -228,7 +244,6 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
           position: 'fixed',
           top: '0',
           left: '0',
-          // transform: 'translate(-50%, -50%)',
           zIndex: 1000,
           height: '100vh',
           width: '100vw',
@@ -252,30 +267,77 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
           </div>
         </div>
       )}
-      <Grid gutter={50}>
-        <Grid.Col span={6} pos="relative">
-          <Summary
-            sentences={summaryData}
-            onSummaryBadgePositionChange={handleSummaryBadgePositionChange}
-            onSourceClick={handleSourceClick}
-            activeSummaryId={activeSummaryId}
-            activeSourceId={activeSourceId}
-            onSubmitQuery={handleSubmitQuery}
-            queryText={queryText}
-            onQueryTextChange={setQueryText}
-            onUpdateSummary={handleUpdateSummary}
-          />
+      <Grid gutter={50} style={{ borderBottom: '1px solid #ddd', marginBottom: '10px', paddingBottom: '10px' }}>
+        <Grid.Col span={4} pos="relative">
+          {globalSummary && (
+            <GlobalSummary
+              sentences={globalSummary.content}
+              onQueryTextChange={() => {}}
+              queryText=""
+              onSubmitQuery={() => {}}
+              onSourceClick={(_, docSummaryId) => {
+                if (docSummaryId) {
+                  const documentId = +docSummaryId - 1;
+                  updateActiveDocumentId(documentId);
+                }
+              }}
+              onUpdateSummary={() => {}}
+            />
+          )}
         </Grid.Col>
-        <Grid.Col span={6}>
-          <Source
-            sourceList={sourcesData}
-            onSourceBadgePositionChange={handleSourceBadgePositionChange}
-            activeSourceId={activeSourceId}
-            onAddToSummary={handleAddToSummary}
-          />
+        <Grid.Col span={4} pos="relative">
+          <ScrollArea offsetScrollbars>
+            <Flex>
+              {localSummaries.map((summary, idx) => (
+                <Box
+                  key={idx}
+                  style={{
+                    backgroundColor: activeDocumentId === summary.id ? 'var(--mantine-color-blue-1)' : 'var(--mantine-color-gray-1)',
+                    border: '1px solid #ddd',
+                    borderRadius: 5,
+                    padding: 5,
+                    margin: 5,
+                    width: 100,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => updateActiveDocumentId(summary.id)}
+                >
+                  Doc
+                  {' '}
+                  {idx + 1}
+                </Box>
+              ))}
+            </Flex>
+          </ScrollArea>
+          {activeDocumentId !== null && (
+            <Summary
+              conversationId={localSummaries[activeDocumentId].conversationId}
+              sentences={localSummaries[activeDocumentId].content}
+              onSummaryBadgePositionChange={handleSummaryBadgePositionChange}
+              onSourceClick={handleSourceClick}
+              activeSummaryId={activeSummaryBlockId}
+              activeSourceId={activeSourceBlockId}
+              onSubmitQuery={handleSubmitQuery}
+              queryText={queryText}
+              onQueryTextChange={setQueryText}
+              onUpdateSummary={handleUpdateSummary}
+            />
+          )}
+        </Grid.Col>
+        <Grid.Col span={4}>
+          {activeDocumentId !== null && (
+            <Source
+              conversationId={localSummaries[activeDocumentId].conversationId}
+              sourceList={sources[activeDocumentId].content}
+              onSourceBadgePositionChange={handleSourceBadgePositionChange}
+              activeSourceId={activeSourceBlockId}
+              onAddToSummary={handleAddToLocalSummary}
+            />
+          )}
         </Grid.Col>
       </Grid>
-      {activeSourceId && (
+      {activeSourceBlockId && (
         <div style={{
           position: 'fixed',
           top: (summaryBadgeTop > sourceBadgeTop ? sourceBadgeTop : summaryBadgeTop) + 18,

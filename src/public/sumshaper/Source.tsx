@@ -10,13 +10,15 @@ import style from './sumsifter.module.css';
 import Markdown from './Markdown';
 
 interface SourceProps {
-  sourceList: { id: string; text: string }[];
+  conversationId: string;
+  sourceList: { id: string; text: string, sources: string[] }[];
   activeSourceId: string | null;
   onSourceBadgePositionChange: (badgeLeft: number, badgeTop: number) => void;
-  onAddToSummary: (text: string, prompt: string) => void;
+  onAddToSummary: (conversationId:string, text: string, prompt: string) => void;
 }
 
 function Source({
+  conversationId,
   sourceList, activeSourceId, onSourceBadgePositionChange, onAddToSummary,
 }: SourceProps) {
   const ref = React.useRef<HTMLDivElement>(null);
@@ -118,16 +120,16 @@ function Source({
   }), [userSelectionRect, contentRef]);
 
   const handleAddToSummary = useCallback(() => {
-    onAddToSummary(userSelection || '', 'Include this to the summary.');
+    onAddToSummary(conversationId, userSelection || '', 'Include this to the summary.');
     setUserSelection(null);
     setHighlightClientRects(null);
-  }, [userSelection, onAddToSummary]);
+  }, [userSelection, conversationId, onAddToSummary]);
 
   const handleMakeDescriptive = useCallback(() => {
-    onAddToSummary(userSelection || '', 'Include this to the summary and make this more descriptive.');
+    onAddToSummary(conversationId, userSelection || '', 'Include this to the summary and make this more descriptive.');
     setUserSelection(null);
     setHighlightClientRects(null);
-  }, [userSelection, onAddToSummary]);
+  }, [userSelection, conversationId, onAddToSummary]);
 
   const handleCreateTicket = useCallback(() => {
     setPopupVisible(true);
@@ -163,12 +165,12 @@ function Source({
 
   const handleSourceQueryKeyUp = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      onAddToSummary(userSelection || '', sourceQuery);
+      onAddToSummary(conversationId, userSelection || '', sourceQuery);
       setSourceQuery('');
       setUserSelection(null);
       setHighlightClientRects(null);
     }
-  }, [sourceQuery, userSelection, onAddToSummary]);
+  }, [sourceQuery, userSelection, onAddToSummary, conversationId]);
 
   const handleFormSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -196,7 +198,7 @@ function Source({
 
   return (
     <>
-      <ScrollArea style={{ height: 'calc(100vh - 110px)' }} pos="relative" viewportRef={ref}>
+      <ScrollArea style={{ height: 'calc(100vh - 160px)' }} pos="relative" viewportRef={ref}>
         <div ref={contentRef} style={{ position: 'relative' }}>
           {highlightClientRects && (
             <div className={style.textHighlightContainer}>
