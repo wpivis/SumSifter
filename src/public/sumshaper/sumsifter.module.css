@@ -60,7 +60,7 @@
 .summaryContextPopup,
 .sourceContextPopup {
   position: absolute;
-  z-index: var(--mantine-z-index-popover);
+  z-index: var(--mantine-z-index-popover, 1000);
   transform: translate(20px, 10%);
   background: #fff;
   box-shadow: 0 2px 30px rgba(0, 0, 0, 0.3), 0 2px 5px rgba(0, 0, 0, 0.25);
