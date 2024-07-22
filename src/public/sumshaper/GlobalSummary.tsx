@@ -1,54 +1,39 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { IconArrowBack, IconCirclePlus, IconPencil } from '@tabler/icons-react';
 import {
-  Title, ScrollArea, Badge, Input, ActionIcon, Tooltip, Divider,
-  Box,
+  Title, ScrollArea, Box, Textarea, Button, Tooltip, ActionIcon, Divider, Input,
 } from '@mantine/core';
+import { IconArrowBack, IconCircleMinus, IconPencil } from '@tabler/icons-react';
 import { useFocusTrap } from '@mantine/hooks';
-import style from './sumsifter.module.css';
 import Markdown from './Markdown';
+import style from './sumsifter.module.css';
+import { SumContent } from './types';
 
-interface SourceProps {
-  sourceList: { id: string; text: string, sources: string[] }[];
-  activeSourceId: string | null;
-  onSourceBadgePositionChange: (badgeLeft: number, badgeTop: number) => void;
-  onAddToSummary: (text: string, prompt: string) => void;
+interface GlobalSummaryProps {
+  sentences: SumContent[];
+  onSourceClick: (summaryId: string | null, sourceId: string | null) => void;
+  onSubmitQuery: (queryText: string) => void;
+  queryText: string;
+  onQueryTextChange: (queryText: string) => void;
+  onUpdateSummary: (text: string, prompt: string) => void;
 }
 
-function Source({
-  sourceList, activeSourceId, onSourceBadgePositionChange, onAddToSummary,
-}: SourceProps) {
+function GlobalSummary({
+  sentences,
+  onSourceClick,
+  onSubmitQuery,
+  queryText,
+  onQueryTextChange,
+  onUpdateSummary,
+}: GlobalSummaryProps) {
   const ref = React.useRef<HTMLDivElement>(null);
   const focusTrapRef = useFocusTrap();
   const contentRef = React.useRef<HTMLDivElement>(null);
   const activeRef = React.useRef<HTMLSpanElement | null>(null);
-  const [positionTop, setPositionTop] = React.useState(0);
-  const [positionLeft, setPositionLeft] = React.useState(0);
+
   const [userSelection, setUserSelection] = React.useState<string | null>(null);
   const [userSelectionRect, setUserSelectionRect] = React.useState<DOMRect | null>(null);
-  const [sourceQuery, setSourceQuery] = React.useState<string>('');
+  const [summaryQuery, setSummaryQuery] = React.useState<string>('');
   const [highlightClientRects, setHighlightClientRects] = React.useState<DOMRect[] | null>(null);
-
-  useEffect(() => {
-    if (ref.current) {
-      const element = ref.current;
-      const handleScroll = () => {
-        setPositionLeft(element?.getBoundingClientRect().left || 0);
-        setPositionTop(activeRef.current?.getBoundingClientRect().top || 0);
-        onSourceBadgePositionChange(element?.getBoundingClientRect().left || 0, activeRef.current?.getBoundingClientRect().top || 0);
-      };
-      ref.current.addEventListener('scroll', handleScroll);
-
-      return () => {
-        element.removeEventListener('scroll', handleScroll);
-      };
-    }
-    return () => { };
-  }, [ref, onSourceBadgePositionChange]);
-
-  const handleActiveRefChange = useCallback((e: HTMLDivElement | null) => {
-    activeRef.current = e;
-  }, []);
 
   useEffect(() => {
     if (ref.current) {
@@ -88,7 +73,7 @@ function Source({
       const removeHighlight = () => {
         setHighlightClientRects(null);
         setUserSelection(null);
-        setSourceQuery('');
+        setSummaryQuery('');
       };
       window.addEventListener('mousedown', removeHighlight);
       return () => {
@@ -98,43 +83,41 @@ function Source({
     return () => { };
   }, [highlightClientRects]);
 
-  useEffect(() => {
-    const element = ref.current;
-    setPositionLeft(element?.getBoundingClientRect().left || 0);
-    setPositionTop(activeRef.current?.getBoundingClientRect().top || 0);
-    onSourceBadgePositionChange(element?.getBoundingClientRect().left || 0, activeRef.current?.getBoundingClientRect().top || 0);
-  }, [activeSourceId, onSourceBadgePositionChange]);
-
   const userSelectionActionBox = useMemo(() => ({
     top: (userSelectionRect?.top || 0) - (contentRef.current?.getBoundingClientRect().top || 0),
     left: 0,
     bottom: (userSelectionRect?.bottom || 0) - (contentRef.current?.getBoundingClientRect().top || 0),
   }), [userSelectionRect, contentRef]);
 
-  const handleAddToSummary = useCallback(() => {
-    onAddToSummary(userSelection || '', 'Include this to the summary.');
+  const handleRemoveFromSummary = useCallback(() => {
+    onUpdateSummary(userSelection || '', 'Remove this from the summary.');
     setUserSelection(null);
     setHighlightClientRects(null);
-  }, [userSelection, onAddToSummary]);
+  }, [userSelection, onUpdateSummary]);
 
   const handleMakeDescriptive = useCallback(() => {
-    onAddToSummary(userSelection || '', 'Include this to the summary and make this more descriptive.');
+    onUpdateSummary(userSelection || '', 'Make this more descriptive.');
     setUserSelection(null);
     setHighlightClientRects(null);
-  }, [userSelection, onAddToSummary]);
+  }, [userSelection, onUpdateSummary]);
 
-  const handleSourceQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setSourceQuery(event.target.value);
+  const handleSummaryQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSummaryQuery(event.target.value);
   }, []);
 
-  const handleSourceQueryKeyUp = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSummaryQueryKeyUp = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      onAddToSummary(userSelection || '', sourceQuery);
-      setSourceQuery('');
+      onUpdateSummary(userSelection || '', summaryQuery);
+      setSummaryQuery('');
       setUserSelection(null);
       setHighlightClientRects(null);
     }
-  }, [sourceQuery, userSelection, onAddToSummary]);
+  }, [summaryQuery, userSelection, onUpdateSummary]);
+
+  const handleSourceClick = useCallback((elem: HTMLDivElement | null, summaryId: string | null, sourceId: string | null) => {
+    onSourceClick(summaryId, sourceId);
+    activeRef.current = elem;
+  }, [onSourceClick]);
 
   return (
     <ScrollArea style={{ height: 'calc(100vh - 150px)' }} pos="relative" viewportRef={ref}>
@@ -156,31 +139,28 @@ function Source({
             ))}
           </div>
         )}
-
-        <Title order={2}>Source Document</Title>
-
-        {/* ActiveId for this is activeSourceId, and activeSourceId is null */}
+        <Title order={2} mb={16}>Global Summary</Title>
         <Box pos="relative">
           <Markdown
-            data={sourceList}
-            activeId={activeSourceId}
+            data={sentences}
             activeSourceId={null}
-            onActiveRefChange={handleActiveRefChange}
+            activeId={null}
+            onSourceClick={handleSourceClick}
           />
         </Box>
 
         {userSelection && (
           <div
-            className={style.sourceContextPopup}
+            className={style.summaryContextPopup}
             style={{
               top: userSelectionActionBox.bottom,
               left: userSelectionActionBox.left,
             }}
             onMouseDown={(e) => { e.stopPropagation(); }}
           >
-            <Tooltip label="Include in summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
-              <ActionIcon variant="transparent" size="md" color="gray" onClick={handleAddToSummary}>
-                <IconCirclePlus />
+            <Tooltip label="Remove from summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+              <ActionIcon variant="transparent" size="md" color="gray" onClick={handleRemoveFromSummary}>
+                <IconCircleMinus />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="Make it descriptive" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
@@ -192,15 +172,15 @@ function Source({
             <Input
               ref={focusTrapRef}
               size="xs"
-              value={sourceQuery}
-              onChange={handleSourceQueryChange}
-              onKeyUp={handleSourceQueryKeyUp}
+              value={summaryQuery}
+              onChange={handleSummaryQueryChange}
+              onKeyUp={handleSummaryQueryKeyUp}
               flex={1}
               ml={4}
               placeholder="What do you want to do this selection?"
               rightSection={
                 (
-                  (sourceQuery.length ? (
+                  (summaryQuery.length ? (
                     <IconArrowBack
                       color="var(--mantine-color-gray-5)"
                     />
@@ -211,35 +191,13 @@ function Source({
           </div>
         )}
 
-        {activeSourceId && (
-          <>
-            <Badge
-              key={activeSourceId}
-              className={style.sourceItemBadge}
-              color="blue.5"
-              style={{
-                position: 'fixed',
-                left: positionLeft - 10,
-                top: positionTop,
-                transform: 'translate(-100%, 0)',
-              }}
-            >
-              {activeSourceId}
-            </Badge>
-            <div style={{
-              position: 'fixed',
-              left: positionLeft - 10,
-              top: positionTop + 16,
-              backgroundColor: 'var(--mantine-color-blue-5)',
-              height: 2,
-              width: 4,
-            }}
-            />
-          </>
-        )}
+        <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
+          <Textarea minRows={1} maxRows={4} autosize placeholder="Type your query here." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
+          <Button onClick={() => { onSubmitQuery(queryText); }}>Send</Button>
+        </Box>
       </div>
     </ScrollArea>
   );
 }
 
-export default Source;
+export default GlobalSummary;

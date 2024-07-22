@@ -57,9 +57,8 @@
             "baseComponent": "summarySource",
             "instruction": "",
             "parameters": {
-                "document": "Russian_Offensive_Campaign_Assessment_12JUL24.docx",
+                "documents": ["1_summary.json", "2_summary.json", "3_summary.json", "4_summary.json", "5_summary.json", "6_summary.json", "7_summary.json"],
                 "prompt": "Summarize this document in 5 sentences.",
-                "ids": "id",
                 "hallucination": false
             }            
         }

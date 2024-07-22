@@ -1,12 +1,17 @@
 import {
   memo, useCallback, useEffect, useMemo, useState,
 } from 'react';
-import { Grid, Loader } from '@mantine/core';
+import {
+  Box, Flex, Grid, Loader, ScrollArea,
+} from '@mantine/core';
 import { initializeTrrack, Registry } from '@trrack/core';
 import Summary from './Summary';
 import { StimulusParams } from '../../store/types';
-import { SumParams } from './types';
+import {
+  SumGlobalSummary, SumParams, SumSource, SumSummary,
+} from './types';
 import Source from './Source';
+import GlobalSummary from './GlobalSummary';
 
 const API_BASE_URL = import.meta.env.VITE_SUMSIFTER_API_URL;
 
@@ -25,7 +30,15 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [isLoading, setIsLoading] = useState(true);
   const [queryText, setQueryText] = useState('');
 
-  const { prompt: defaultPrompt, document: studyDocument } = parameters;
+  const [globalSummary, setGlobalSummary] = useState<SumGlobalSummary | null>(null);
+  const [localSummaries, setLocalSummaries] = useState<SumSummary[]>([]);
+  const [sources, setSources] = useState<SumSource[]>([]);
+
+  const [activeDocumentId, setActiveDocumentId] = useState<number | null>(null);
+
+  // const [documentIds, setDocumentIds] = useState<string[]>([]);
+
+  const { prompt: defaultPrompt, documents: documentIds } = parameters;
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -54,40 +67,50 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
+      const response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           conversationId: null,
-          documentId: studyDocument,
+          documentIds,
           promptType: 'general',
           prompt: defaultPrompt,
         }),
       });
-      const data = await response.json();
 
-      setConversationId(data.conversationId);
+      const { summary, conversationId: globalConversationId, individualDocuments } = await response.json();
 
-      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
-        id: String(idx),
-        text: sentenceObj.text,
-        sources: sentenceObj.sources,
-      }));
+      setGlobalSummary({
+        content: summary,
+        id: 'global',
+        conversationId: globalConversationId,
+      });
 
-      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
-        id: sourceObj.id,
-        text: sourceObj.text,
-      }));
+      const sourceList: SumSource[] = [];
+      const summaryList: SumSummary[] = [];
 
-      setSummaryData(summary);
-      setSourcesData(source);
+      individualDocuments.forEach(({ conversationId: docConversationId, source, summary: docSummary }: {conversationId: string, source: { id: string, text: string, sources: string[] }[], summary: { id: string, text: string, sources: string[] }[]}, idx) => {
+        sourceList.push({
+          id: idx,
+          content: source,
+        });
+        summaryList.push({
+          id: idx,
+          conversationId: docConversationId,
+          content: docSummary,
+        });
+      });
+
+      setLocalSummaries(summaryList);
+      setSources(sourceList);
+
       setIsLoading(false);
     }
 
     fetchData();
-  }, [defaultPrompt, studyDocument]);
+  }, [defaultPrompt, documentIds]);
 
   const handleSourceClick = useCallback((summaryId: string | null, sourceId: string | null) => {
     trrack.apply('Clicked', actions.mouseHoverAction({ summaryId, sourceId }));
@@ -121,7 +144,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         },
         body: JSON.stringify({
           conversationId,
-          documentId: studyDocument,
+          documentId: null, // TODO: change this to studyDocument
           promptType: 'general',
           prompt: queryPrompt,
         }),
@@ -145,7 +168,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     }
 
     fetchData();
-  }, [studyDocument, conversationId]);
+  }, [conversationId]);
 
   const handleUpdateSummary = useCallback((summaryText: string, sourcePrompt: string) => {
     async function fetchData() {
@@ -157,7 +180,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         },
         body: JSON.stringify({
           conversationId,
-          documentId: studyDocument,
+          documentId: null, // TODO: change this to studyDocument
           promptType: 'summary',
           summaryTargetText: summaryText,
           prompt: sourcePrompt,
@@ -182,7 +205,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     }
 
     fetchData();
-  }, [conversationId, studyDocument]);
+  }, [conversationId]);
 
   const handleAddToSummary = useCallback((sourceText: string, sourcePrompt: string) => {
     async function fetchData() {
@@ -194,7 +217,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         },
         body: JSON.stringify({
           conversationId,
-          documentId: studyDocument,
+          documentId: null, // TODO: change this to studyDocument
           promptType: 'source',
           sourceTargetText: sourceText,
           prompt: sourcePrompt,
@@ -219,7 +242,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     }
 
     fetchData();
-  }, [conversationId, studyDocument]);
+  }, [conversationId]);
 
   return (
     <>
@@ -254,28 +277,62 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       )}
       <Grid gutter={50} style={{ borderBottom: '1px solid #ddd', marginBottom: '10px', paddingBottom: '10px' }}>
         <Grid.Col span={4} pos="relative">
-          Global summary will be shown here.
+          {globalSummary && (
+            <GlobalSummary
+              sentences={globalSummary.content}
+              onQueryTextChange={() => {}}
+              queryText=""
+              onSubmitQuery={() => {}}
+              onSourceClick={() => {}}
+              onUpdateSummary={() => {}}
+            />
+          )}
         </Grid.Col>
         <Grid.Col span={4} pos="relative">
-          <Summary
-            sentences={summaryData}
-            onSummaryBadgePositionChange={handleSummaryBadgePositionChange}
-            onSourceClick={handleSourceClick}
-            activeSummaryId={activeSummaryId}
-            activeSourceId={activeSourceId}
-            onSubmitQuery={handleSubmitQuery}
-            queryText={queryText}
-            onQueryTextChange={setQueryText}
-            onUpdateSummary={handleUpdateSummary}
-          />
+          <ScrollArea offsetScrollbars>
+            <Flex>
+              {localSummaries.map((summary, idx) => (
+                <Box
+                  key={idx}
+                  style={{
+                    backgroundColor: activeDocumentId === summary.id ? 'var(--mantine-color-blue-1)' : 'var(--mantine-color-gray-1)',
+                    border: '1px solid #ddd',
+                    borderRadius: 5,
+                    padding: 5,
+                    margin: 5,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setActiveDocumentId(summary.id)}
+                >
+                  Doc
+                  {idx + 1}
+                </Box>
+              ))}
+            </Flex>
+          </ScrollArea>
+          {activeDocumentId !== null && (
+            <Summary
+              sentences={localSummaries[activeDocumentId].content}
+              onSummaryBadgePositionChange={handleSummaryBadgePositionChange}
+              onSourceClick={handleSourceClick}
+              activeSummaryId={activeSummaryId}
+              activeSourceId={activeSourceId}
+              onSubmitQuery={handleSubmitQuery}
+              queryText={queryText}
+              onQueryTextChange={setQueryText}
+              onUpdateSummary={handleUpdateSummary}
+            />
+          )}
         </Grid.Col>
         <Grid.Col span={4}>
-          <Source
-            sourceList={sourcesData}
-            onSourceBadgePositionChange={handleSourceBadgePositionChange}
-            activeSourceId={activeSourceId}
-            onAddToSummary={handleAddToSummary}
-          />
+          {activeDocumentId !== null && (
+            <Source
+              sourceList={sources[activeDocumentId].content}
+              onSourceBadgePositionChange={handleSourceBadgePositionChange}
+              activeSourceId={activeSourceId}
+              onAddToSummary={handleAddToSummary}
+            />
+          )}
         </Grid.Col>
       </Grid>
       {activeSourceId && (
