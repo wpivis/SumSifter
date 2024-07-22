@@ -9,6 +9,8 @@ import { useFocusTrap } from '@mantine/hooks';
 import style from './sumsifter.module.css';
 import Markdown from './Markdown';
 
+const API_BASE_URL = import.meta.env.VITE_SUMSIFTER_API_URL;
+
 interface SourceProps {
   conversationId: string;
   sourceList: { id: string; text: string, sources: string[] }[];
@@ -138,13 +140,13 @@ function Source({
 
   const handleCreateEmail = useCallback(async () => {
     if (userSelection) {
-      const response = await fetch('http://127.0.0.1:5000/summaries/generate-email/', {
+      const response = await fetch(`${API_BASE_URL}/summaries/generate-email/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          conversationId: '04d08ca8-e8e0-4612-83f5-65bcefcc6b28',
+          conversationId,
           documentId: '2024 Problem Book_sumsifter_short_2.docx', // Example documentId, replace with actual
           promptType: 'general',
           sourceTargetText: null,
@@ -157,7 +159,7 @@ function Source({
       setEmailContent(data.emailContent);
       setEmailModalVisible(true);
     }
-  }, [userSelection]);
+  }, [userSelection, conversationId]);
 
   const handleSourceQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSourceQuery(event.target.value);
