@@ -8,18 +8,20 @@ import Markdown from './Markdown';
 import style from './sumsifter.module.css';
 
 interface SummaryProps {
+  conversationId: string;
   sentences: { id: string, text: string; sources: string[] }[];
   onSourceClick: (summaryId: string | null, sourceId: string | null) => void;
   activeSummaryId: string | null;
   activeSourceId: string | null;
   onSummaryBadgePositionChange: (badgeTop: number) => void;
-  onSubmitQuery: (queryText: string) => void;
+  onSubmitQuery: (conversationId: string, queryText: string) => void;
   queryText: string;
   onQueryTextChange: (queryText: string) => void;
-  onUpdateSummary: (text: string, prompt: string) => void;
+  onUpdateSummary: (conversationId: string, text: string, prompt: string) => void;
 }
 
 function Summary({
+  conversationId,
   sentences,
   onSourceClick,
   activeSummaryId,
@@ -116,16 +118,16 @@ function Summary({
   }), [userSelectionRect, contentRef]);
 
   const handleRemoveFromSummary = useCallback(() => {
-    onUpdateSummary(userSelection || '', 'Remove this from the summary.');
+    onUpdateSummary(conversationId, userSelection || '', 'Remove this from the summary.');
     setUserSelection(null);
     setHighlightClientRects(null);
-  }, [userSelection, onUpdateSummary]);
+  }, [userSelection, conversationId, onUpdateSummary]);
 
   const handleMakeDescriptive = useCallback(() => {
-    onUpdateSummary(userSelection || '', 'Make this more descriptive.');
+    onUpdateSummary(conversationId, userSelection || '', 'Make this more descriptive.');
     setUserSelection(null);
     setHighlightClientRects(null);
-  }, [userSelection, onUpdateSummary]);
+  }, [userSelection, conversationId, onUpdateSummary]);
 
   const handleSummaryQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSummaryQuery(event.target.value);
@@ -133,12 +135,12 @@ function Summary({
 
   const handleSummaryQueryKeyUp = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      onUpdateSummary(userSelection || '', summaryQuery);
+      onUpdateSummary(conversationId, userSelection || '', summaryQuery);
       setSummaryQuery('');
       setUserSelection(null);
       setHighlightClientRects(null);
     }
-  }, [summaryQuery, userSelection, onUpdateSummary]);
+  }, [summaryQuery, conversationId, userSelection, onUpdateSummary]);
 
   const handleSourceClick = useCallback((elem: HTMLDivElement | null, summaryId: string | null, sourceId: string | null) => {
     onSourceClick(summaryId, sourceId);
@@ -223,7 +225,7 @@ function Summary({
 
         <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
           <Textarea minRows={1} maxRows={4} autosize placeholder="Type your query here." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
-          <Button onClick={() => { onSubmitQuery(queryText); }}>Send</Button>
+          <Button onClick={() => { onSubmitQuery(conversationId, queryText); }}>Send</Button>
         </Box>
         {activeSummaryId && (
           <div style={{
