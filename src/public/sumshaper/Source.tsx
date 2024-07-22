@@ -329,7 +329,7 @@ function Source({
           <input type="text" id="summary" name="summary" required />
 
           <label htmlFor="description">Text of Interest:</label>
-          <textarea id="description" name="description" rows="6" required defaultValue={userSelection || ''} />
+          <textarea id="description" name="description" rows={6} required defaultValue={userSelection || ''} />
 
           <label htmlFor="priority">Priority Level:</label>
           <select id="priority" name="priority" required>
