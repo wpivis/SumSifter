@@ -15,7 +15,7 @@ interface GlobalSummaryProps {
   onSubmitQuery: (conversationId: string, queryText: string) => void;
   queryText: string;
   onQueryTextChange: (queryText: string) => void;
-  onUpdateSummary: (text: string, prompt: string) => void;
+  onUpdateSummary: (conversationId: string, text: string, prompt: string) => void;
 }
 
 function GlobalSummary({
@@ -92,16 +92,16 @@ function GlobalSummary({
   }), [userSelectionRect, contentRef]);
 
   const handleRemoveFromSummary = useCallback(() => {
-    onUpdateSummary(userSelection || '', 'Remove this from the summary.');
+    onUpdateSummary(conversationId, userSelection || '', 'Remove this from the summary.');
     setUserSelection(null);
     setHighlightClientRects(null);
-  }, [userSelection, onUpdateSummary]);
+  }, [userSelection, onUpdateSummary, conversationId]);
 
   const handleMakeDescriptive = useCallback(() => {
-    onUpdateSummary(userSelection || '', 'Make this more descriptive. Add more details and similify the language. Add more details from the source to enhance the explanation and readability.');
+    onUpdateSummary(conversationId, userSelection || '', 'Make this more descriptive. Add more details and similify the language. Add more details from the source to enhance the explanation and readability.');
     setUserSelection(null);
     setHighlightClientRects(null);
-  }, [userSelection, onUpdateSummary]);
+  }, [userSelection, onUpdateSummary, conversationId]);
 
   const handleSummaryQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSummaryQuery(event.target.value);
@@ -109,12 +109,12 @@ function GlobalSummary({
 
   const handleSummaryQueryKeyUp = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      onUpdateSummary(userSelection || '', summaryQuery);
+      onUpdateSummary(conversationId, userSelection || '', summaryQuery);
       setSummaryQuery('');
       setUserSelection(null);
       setHighlightClientRects(null);
     }
-  }, [summaryQuery, userSelection, onUpdateSummary]);
+  }, [summaryQuery, userSelection, onUpdateSummary, conversationId]);
 
   const handleSourceClick = useCallback((elem: HTMLDivElement | null, summaryId: string | null, sourceId: string | null) => {
     onSourceClick(summaryId, sourceId);

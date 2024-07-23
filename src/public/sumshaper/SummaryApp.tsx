@@ -163,6 +163,37 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     fetchData();
   }, []);
 
+  const handleUpdateGlobalSummary = useCallback((conversationId: string, summaryText: string, sourcePrompt: string) => {
+    async function fetchData() {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId,
+          documentIds: [],
+          promptType: 'summary',
+          summaryTargetText: summaryText,
+          prompt: sourcePrompt,
+        }),
+      });
+
+      const { summary, conversationId: globalConversationId } = await response.json();
+
+      setGlobalSummary({
+        content: summary,
+        id: 0,
+        conversationId: globalConversationId,
+      });
+
+      setIsLoading(false);
+    }
+
+    fetchData();
+  }, []);
+
   const handleSubmitLocalQuery = useCallback((conversationId: string, queryPrompt: string) => {
     async function fetchData() {
       const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
@@ -317,7 +348,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
                   updateActiveDocumentId(documentId);
                 }
               }}
-              onUpdateSummary={() => {}}
+              onUpdateSummary={handleUpdateGlobalSummary}
             />
           )}
         </Grid.Col>
