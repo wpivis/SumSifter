@@ -98,7 +98,7 @@ function GlobalSummary({
   }, [userSelection, onUpdateSummary]);
 
   const handleMakeDescriptive = useCallback(() => {
-    onUpdateSummary(userSelection || '', 'Make this more descriptive.');
+    onUpdateSummary(userSelection || '', 'Make this more descriptive. Add more details and similify the language. Add more details from the source to enhance the explanation and readability.');
     setUserSelection(null);
     setHighlightClientRects(null);
   }, [userSelection, onUpdateSummary]);
@@ -165,7 +165,7 @@ function GlobalSummary({
                 <IconCircleMinus />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="Make it descriptive" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+            <Tooltip label="Simplify" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
               <ActionIcon variant="transparent" size="md" color="gray" onClick={handleMakeDescriptive}>
                 <IconPencil />
               </ActionIcon>
@@ -194,7 +194,7 @@ function GlobalSummary({
         )}
 
         <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
-          <Textarea minRows={1} maxRows={4} autosize placeholder="Type your query here." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
+          <Textarea minRows={1} maxRows={4} autosize placeholder="Message LLM." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
           <Button onClick={() => { onSubmitQuery(conversationId, queryText); }}>Send</Button>
         </Box>
       </div>
