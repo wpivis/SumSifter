@@ -201,8 +201,19 @@ function Source({
 
   return (
     <>
-      <ScrollArea style={{ height: 'calc(100vh - 160px)' }} pos="relative" viewportRef={ref}>
-        <div ref={contentRef} style={{ position: 'relative' }}>
+      <ScrollArea
+        style={{
+          height: 'calc(100vh - 160px)',
+          boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #d0d0d0',
+          // background: '#f6f6f6',
+          padding: 0,
+          borderRadius: 10,
+        }}
+        pos="relative"
+        viewportRef={ref}
+      >
+        <div ref={contentRef} style={{ position: 'relative', padding: 5 }}>
           {highlightClientRects && (
             <div className={style.textHighlightContainer}>
               {highlightClientRects.map((rect, index) => (
