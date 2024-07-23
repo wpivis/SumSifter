@@ -70,6 +70,15 @@
                 "prompt": "Summarize this document in 5 sentences.",
                 "hallucination": false
             }
+        },
+        "summshaper3": {
+            "baseComponent": "summarySource",
+            "instruction": "",
+            "parameters": {
+                "documents": ["1_interview_summary.json", "2_interview_summary.json", "3_interview_summary.json", "4_interview_summary.json"],
+                "prompt": "Summarize this document in 5 sentences.",
+                "hallucination": true
+            }
         }
     },
     "sequence": {
@@ -78,10 +87,11 @@
             "introduction",
             "tutorial",
             {
-                "order": "random",
+                "order": "fixed",
                 "components": [
                     "summshaper1",
-                    "summshaper2"
+                    "summshaper2", 
+                    "summshaper3"
                 ]
             }
         ]
