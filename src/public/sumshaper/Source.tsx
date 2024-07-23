@@ -122,13 +122,13 @@ function Source({
   }), [userSelectionRect, contentRef]);
 
   const handleAddToSummary = useCallback(() => {
-    onAddToSummary(conversationId, userSelection || '', 'Include this to the summary.');
+    onAddToSummary(conversationId, userSelection || '', 'Include this to the summary. Add more details about this. Use it in the context of the entire summary and do not just copy paste. ');
     setUserSelection(null);
     setHighlightClientRects(null);
   }, [userSelection, conversationId, onAddToSummary]);
 
   const handleMakeDescriptive = useCallback(() => {
-    onAddToSummary(conversationId, userSelection || '', 'Include this to the summary and make this more descriptive.');
+    onAddToSummary(conversationId, userSelection || '', 'Include this to the summary and make this more descriptive. Add more details about this and similify the language so that it is more readable.');
     setUserSelection(null);
     setHighlightClientRects(null);
   }, [userSelection, conversationId, onAddToSummary]);
@@ -147,7 +147,7 @@ function Source({
         },
         body: JSON.stringify({
           conversationId,
-          documentId: '2024 Problem Book_sumsifter_short_2.docx', // Example documentId, replace with actual
+          documentId: '2024 Problem Book_sumsifter_short_2.docx',
           promptType: 'general',
           sourceTargetText: null,
           summaryTargetText: null,
@@ -156,7 +156,8 @@ function Source({
       });
 
       const data = await response.json();
-      setEmailContent(data.emailContent);
+      const emailContentWithSelection = `${data.emailContent}\n\n---\nText of Interest from the Report:\n${userSelection}`;
+      setEmailContent(emailContentWithSelection);
       setEmailModalVisible(true);
     }
   }, [userSelection, conversationId]);
@@ -244,17 +245,17 @@ function Source({
                   <IconCirclePlus />
                 </ActionIcon>
               </Tooltip>
-              <Tooltip label="Make it descriptive" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+              <Tooltip label="Simplify and add to Summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
                 <ActionIcon variant="transparent" size="md" color="gray" onClick={handleMakeDescriptive}>
                   <IconPencil />
                 </ActionIcon>
               </Tooltip>
-              <Tooltip label="Add to Custom Notes" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+              <Tooltip label="Create Custom Notes" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
                 <ActionIcon variant="transparent" size="md" color="gray" onClick={handleCreateTicket}>
                   <IconWritingSign />
                 </ActionIcon>
               </Tooltip>
-              <Tooltip label="Open Custom Notes" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+              <Tooltip label="Open Collected Notes" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
                 <ActionIcon variant="transparent" size="md" color="gray" onClick={handlePrintIssues}>
                   <IconNotebook />
                 </ActionIcon>
@@ -273,7 +274,7 @@ function Source({
                 onKeyUp={handleSourceQueryKeyUp}
                 flex={1}
                 ml={4}
-                placeholder="What do you want to do with this selection?"
+                placeholder="What do you want to do with this selection to shape the summary?"
                 rightSection={
                   sourceQuery.length ? (
                     <IconArrowBack
@@ -317,34 +318,44 @@ function Source({
       <Modal
         opened={popupVisible}
         onClose={() => setPopupVisible(false)}
-        title="Create a Ticket"
+        title="Add / Create Custom Notes"
       >
-        <form onSubmit={handleFormSubmit}>
-          <label htmlFor="issue">Topic:</label>
-          <select id="issue" name="issue" required>
-            <option value="technicalReview">Technical Review</option>
-            <option value="translationReview">Translation Support from Language Analyst</option>
-          </select>
+        <form onSubmit={handleFormSubmit} className={style.modalForm}>
+          <div className={style.formGroup}>
+            <label htmlFor="issue" className={style.formLabel}>Topic:</label>
+            <select id="issue" name="issue" className={style.formSelect} required>
+              <option value="technicalReview">Technical Review</option>
+              <option value="translationReview">Translation Support from Language Analyst</option>
+            </select>
+          </div>
 
-          <label htmlFor="documentTitle">Document Title:</label>
-          <input type="text" id="documentTitle" name="documentTitle" required />
+          <div className={style.formGroup}>
+            <label htmlFor="documentTitle" className={style.formLabel}>Document Title:</label>
+            <input type="text" id="documentTitle" name="documentTitle" className={style.formInput} required />
+          </div>
 
-          <label htmlFor="summary">Summary:</label>
-          <input type="text" id="summary" name="summary" required />
+          <div className={style.formGroup}>
+            <label htmlFor="summary" className={style.formLabel}>Notes:</label>
+            <input type="text" id="summary" name="summary" className={style.formInput} required />
+          </div>
 
-          <label htmlFor="description">Text of Interest:</label>
-          <textarea id="description" name="description" rows={6} required defaultValue={userSelection || ''} />
+          <div className={style.formGroup}>
+            <label htmlFor="description" className={style.formLabel}>Text of Interest:</label>
+            <textarea id="description" name="description" rows={6} className={style.formTextarea} required defaultValue={userSelection || ''} />
+          </div>
 
-          <label htmlFor="priority">Priority Level:</label>
-          <select id="priority" name="priority" required>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
+          <div className={style.formGroup}>
+            <label htmlFor="priority" className={style.formLabel}>Priority Level:</label>
+            <select id="priority" name="priority" className={style.formSelect} required>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button type="submit">Create</Button>
-            <Button type="button" onClick={() => setPopupVisible(false)}>Cancel</Button>
+          <div className={style.buttonGroup}>
+            <Button type="submit" className={style.formButton}>Add / Create</Button>
+            <Button type="button" onClick={() => setPopupVisible(false)} className={style.formButton}>Cancel</Button>
           </div>
         </form>
       </Modal>
@@ -352,12 +363,12 @@ function Source({
       <Modal
         opened={issuesModalVisible}
         onClose={() => setIssuesModalVisible(false)}
-        title="Collected Issues"
+        title="Open Collected Notes"
       >
         <Textarea
           readOnly
           value={issues.map((issue, index) => (
-            `Issue ${index + 1}:
+            `Note${index + 1}:
             Issue Type: ${issue.issue}
             Document Title: ${issue.documentTitle}
             Summary: ${issue.summary}
