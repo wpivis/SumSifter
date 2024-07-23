@@ -42,8 +42,8 @@ function GlobalSummary({
   const [highlightClientRects, setHighlightClientRects] = React.useState<DOMRect[] | null>(null);
 
   useEffect(() => {
-    if (ref.current) {
-      const element = ref.current;
+    if (contentRef.current) {
+      const element = contentRef.current;
       const handleMouseUp = () => {
         // get selected text
         const selection = window.getSelection();
@@ -129,6 +129,7 @@ function GlobalSummary({
     <ScrollArea
       style={{ height: 'calc(100vh - 160px)' }}
       pos="relative"
+      viewportRef={ref}
     >
       <div ref={contentRef} style={{ position: 'relative' }}>
         {/* background highlight */}
@@ -149,7 +150,7 @@ function GlobalSummary({
           </div>
         )}
         <Title order={2} mb={16}>Global Summary</Title>
-        <Box pos="relative" ref={ref}>
+        <Box pos="relative">
           <Markdown
             data={sentences}
             activeSourceId={null}
@@ -200,24 +201,24 @@ function GlobalSummary({
           </div>
         )}
 
-        <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
-          <Textarea
-            minRows={1}
-            maxRows={4}
-            autosize
-            placeholder="Message LLM"
-            value={queryText}
-            onChange={(e) => { onQueryTextChange(e.target.value); }}
-            mr={10}
-            flex={1}
-            rightSection={(
-              <ActionIcon variant="subtle" aria-label="Send" onClick={() => onSubmitQuery(conversationId, queryText)}>
-                <IconSend2 />
-              </ActionIcon>
-            )}
-          />
-        </Box>
       </div>
+      <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
+        <Textarea
+          minRows={1}
+          maxRows={4}
+          autosize
+          placeholder="Message LLM"
+          value={queryText}
+          onChange={(e) => { onQueryTextChange(e.target.value); }}
+          mr={10}
+          flex={1}
+          rightSection={(
+            <ActionIcon variant="subtle" aria-label="Send" onClick={() => onSubmitQuery(conversationId, queryText)}>
+              <IconSend2 />
+            </ActionIcon>
+            )}
+        />
+      </Box>
     </ScrollArea>
   );
 }
