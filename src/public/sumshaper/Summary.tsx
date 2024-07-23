@@ -1,8 +1,12 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, {
+  memo, useCallback, useEffect, useMemo,
+} from 'react';
 import {
-  Title, ScrollArea, Box, Textarea, Button, Tooltip, ActionIcon, Divider, Input,
+  Title, ScrollArea, Box, Textarea, Tooltip, ActionIcon, Divider, Input,
 } from '@mantine/core';
-import { IconArrowBack, IconCircleMinus, IconPencil } from '@tabler/icons-react';
+import {
+  IconArrowBack, IconCircleMinus, IconPencil, IconSend2,
+} from '@tabler/icons-react';
 import { useFocusTrap } from '@mantine/hooks';
 import Markdown from './Markdown';
 import style from './sumsifter.module.css';
@@ -64,8 +68,8 @@ function Summary({
   }, [ref, onSummaryBadgePositionChange]);
 
   useEffect(() => {
-    if (ref.current) {
-      const element = ref.current;
+    if (contentRef.current) {
+      const element = contentRef.current;
       const handleMouseUp = () => {
         // get selected text
         const selection = window.getSelection();
@@ -223,24 +227,37 @@ function Summary({
           </div>
         )}
 
-        <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
-          <Textarea minRows={1} maxRows={4} autosize placeholder="Message LLM" value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
-          <Button onClick={() => { onSubmitQuery(conversationId, queryText); }}>Send</Button>
-        </Box>
-        {activeSummaryId && (
-          <div style={{
-            position: 'fixed',
-            top: positionTop + 18,
-            left: positionLeftSummary + 5,
-            backgroundColor: 'var(--mantine-color-blue-5)',
-            height: 2,
-            width: positionLeft - positionLeftSummary + 35,
-          }}
-          />
-        )}
       </div>
+      <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
+        <Textarea
+          minRows={1}
+          maxRows={4}
+          autosize
+          placeholder="Message LLM"
+          value={queryText}
+          onChange={(e) => { onQueryTextChange(e.target.value); }}
+          mr={10}
+          flex={1}
+          rightSection={(
+            <ActionIcon variant="subtle" aria-label="Send" onClick={() => onSubmitQuery(conversationId, queryText)}>
+              <IconSend2 />
+            </ActionIcon>
+            )}
+        />
+      </Box>
+      {activeSummaryId && (
+      <div style={{
+        position: 'fixed',
+        top: positionTop + 18,
+        left: positionLeftSummary + 5,
+        backgroundColor: 'var(--mantine-color-blue-5)',
+        height: 2,
+        width: positionLeft - positionLeftSummary + 35,
+      }}
+      />
+      )}
     </ScrollArea>
   );
 }
 
-export default Summary;
+export default memo(Summary);
