@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   IconArrowBack, IconCirclePlus, IconPencil, IconNotebook, IconWritingSign, IconMail,
+  IconList,
 } from '@tabler/icons-react';
 import {
   Title, ScrollArea, Badge, Input, ActionIcon, Tooltip, Divider, Box, Modal, Textarea, Button,
@@ -133,6 +134,12 @@ function Source({
     setHighlightClientRects(null);
   }, [userSelection, conversationId, onAddToSummary]);
 
+  const handleMakeBulletList = useCallback(() => {
+    onAddToSummary(conversationId, userSelection || '', 'Make a bullet list using markdown.');
+    setUserSelection(null);
+    setHighlightClientRects(null);
+  }, [userSelection, conversationId, onAddToSummary]);
+
   const handleCreateTicket = useCallback(() => {
     setPopupVisible(true);
     setHighlightClientRects(null);
@@ -259,6 +266,11 @@ function Source({
               <Tooltip label="Simplify and add to Summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
                 <ActionIcon variant="transparent" size="md" color="gray" onClick={handleMakeDescriptive}>
                   <IconPencil />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Create outlines" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+                <ActionIcon variant="transparent" size="md" color="gray" onClick={handleMakeBulletList}>
+                  <IconList />
                 </ActionIcon>
               </Tooltip>
               <Tooltip label="Create Custom Notes" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
