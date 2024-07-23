@@ -2,10 +2,10 @@ import React, {
   memo, useCallback, useEffect, useMemo,
 } from 'react';
 import {
-  Title, ScrollArea, Box, Textarea, Tooltip, ActionIcon, Divider, Input,
+  Title, ScrollArea, Box, Textarea, Tooltip, ActionIcon, Divider, Input, Flex,
 } from '@mantine/core';
 import {
-  IconArrowBack, IconCircleMinus, IconPencil, IconSend2,
+  IconArrowBack, IconCircleMinus, IconPencil, IconRefresh, IconSend2,
 } from '@tabler/icons-react';
 import { useFocusTrap } from '@mantine/hooks';
 import Markdown from './Markdown';
@@ -151,7 +151,17 @@ function GlobalSummary({
             ))}
           </div>
         )}
-        <Title order={2} mb={16}>Global Summary</Title>
+
+        <Flex align="center" style={{ justifyContent: 'space-between' }}>
+          <Title order={2} mb={16}>
+            Global Summary
+          </Title>
+          <Tooltip label="Re-generate summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+            <ActionIcon variant="light" onClick={() => onSubmitQuery(conversationId, 'Summarize')} mb={10}>
+              <IconRefresh />
+            </ActionIcon>
+          </Tooltip>
+        </Flex>
         <Box pos="relative">
           <Markdown
             data={sentences}
