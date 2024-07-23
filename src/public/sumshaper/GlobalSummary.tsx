@@ -1,8 +1,12 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, {
+  memo, useCallback, useEffect, useMemo,
+} from 'react';
 import {
-  Title, ScrollArea, Box, Textarea, Button, Tooltip, ActionIcon, Divider, Input,
+  Title, ScrollArea, Box, Textarea, Tooltip, ActionIcon, Divider, Input,
 } from '@mantine/core';
-import { IconArrowBack, IconCircleMinus, IconPencil } from '@tabler/icons-react';
+import {
+  IconArrowBack, IconCircleMinus, IconPencil, IconSend2,
+} from '@tabler/icons-react';
 import { useFocusTrap } from '@mantine/hooks';
 import Markdown from './Markdown';
 import style from './sumsifter.module.css';
@@ -122,7 +126,10 @@ function GlobalSummary({
   }, [onSourceClick]);
 
   return (
-    <ScrollArea style={{ height: 'calc(100vh - 160px)' }} pos="relative" viewportRef={ref}>
+    <ScrollArea
+      style={{ height: 'calc(100vh - 160px)' }}
+      pos="relative"
+    >
       <div ref={contentRef} style={{ position: 'relative' }}>
         {/* background highlight */}
         {highlightClientRects && (
@@ -142,7 +149,7 @@ function GlobalSummary({
           </div>
         )}
         <Title order={2} mb={16}>Global Summary</Title>
-        <Box pos="relative">
+        <Box pos="relative" ref={ref}>
           <Markdown
             data={sentences}
             activeSourceId={null}
@@ -194,12 +201,25 @@ function GlobalSummary({
         )}
 
         <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
-          <Textarea minRows={1} maxRows={4} autosize placeholder="Message LLM." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
-          <Button onClick={() => { onSubmitQuery(conversationId, queryText); }}>Send</Button>
+          <Textarea
+            minRows={1}
+            maxRows={4}
+            autosize
+            placeholder="Message LLM"
+            value={queryText}
+            onChange={(e) => { onQueryTextChange(e.target.value); }}
+            mr={10}
+            flex={1}
+            rightSection={(
+              <ActionIcon variant="subtle" aria-label="Send" onClick={() => onSubmitQuery(conversationId, queryText)}>
+                <IconSend2 />
+              </ActionIcon>
+            )}
+          />
         </Box>
       </div>
     </ScrollArea>
   );
 }
 
-export default GlobalSummary;
+export default memo(GlobalSummary);
