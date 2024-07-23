@@ -333,7 +333,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
           </div>
         </div>
       )}
-      <Grid gutter={50} style={{ borderBottom: '1px solid #ddd', marginBottom: '10px', paddingBottom: '10px' }}>
+      <Grid gutter={20} style={{ borderBottom: '1px solid #ddd', marginBottom: '10px', paddingBottom: '10px' }}>
         <Grid.Col span={4} pos="relative">
           {globalSummary && (
             <GlobalSummary

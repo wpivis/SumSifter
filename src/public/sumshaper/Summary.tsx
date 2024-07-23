@@ -156,7 +156,13 @@ function Summary({
   }, [onSourceClick, onSummaryBadgePositionChange]);
 
   return (
-    <ScrollArea style={{ height: 'calc(100vh - 220px)' }} pos="relative" viewportRef={ref}>
+    <ScrollArea
+      style={{ height: 'calc(100vh - 220px)' }}
+      pos="relative"
+      viewportRef={ref}
+      scrollbars="y"
+      offsetScrollbars
+    >
       <div ref={contentRef} style={{ position: 'relative' }}>
         {/* background highlight */}
         {highlightClientRects && (
@@ -228,7 +234,16 @@ function Summary({
         )}
 
       </div>
-      <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
+      <Box
+        display="flex"
+        pos="sticky"
+        bottom={-1}
+        pb={10}
+        pt={10}
+        mt={10}
+        bg="#fff"
+        style={{ borderTop: '1px solid #ddd' }}
+      >
         <Textarea
           minRows={1}
           maxRows={4}
@@ -252,7 +267,7 @@ function Summary({
         left: positionLeftSummary + 5,
         backgroundColor: 'var(--mantine-color-blue-5)',
         height: 2,
-        width: positionLeft - positionLeftSummary + 35,
+        width: positionLeft - positionLeftSummary + 8,
       }}
       />
       )}

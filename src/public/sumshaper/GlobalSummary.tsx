@@ -130,6 +130,8 @@ function GlobalSummary({
       style={{ height: 'calc(100vh - 160px)' }}
       pos="relative"
       viewportRef={ref}
+      scrollbars="y"
+      offsetScrollbars
     >
       <div ref={contentRef} style={{ position: 'relative' }}>
         {/* background highlight */}
@@ -202,7 +204,16 @@ function GlobalSummary({
         )}
 
       </div>
-      <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
+      <Box
+        display="flex"
+        pos="sticky"
+        bottom={-1}
+        pb={10}
+        pt={10}
+        mt={10}
+        bg="#fff"
+        style={{ borderTop: '1px solid #ddd' }}
+      >
         <Textarea
           minRows={1}
           maxRows={4}
