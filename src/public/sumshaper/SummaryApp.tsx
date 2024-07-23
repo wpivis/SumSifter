@@ -40,22 +40,25 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
 
-    const mouseHoverAction = reg.register('mouseHover', (state, mouseEnter: { summaryId: string | null, sourceId: string | null }) => {
-      state.activeSummaryId = mouseEnter.summaryId;
-      state.activeSourceId = mouseEnter.sourceId;
+    const sourceClickAction = reg.register('click', (state, actionData: { documentId: number | null, summaryId: string | null, sourceId: string | null }) => {
+      state.activeSummaryId = actionData.summaryId;
+      state.activeSourceId = actionData.sourceId;
+      state.activeDocumentId = actionData.documentId;
       return state;
     });
 
     const trrackInst = initializeTrrack({
       registry: reg,
       initialState: {
-        activeSummaryId: null, activeSourceId: null,
+        activeDocumentId: null,
+        activeSummaryId: null,
+        activeSourceId: null,
       },
     });
 
     return {
       actions: {
-        mouseHoverAction,
+        sourceClickAction,
       },
       trrack: trrackInst,
     };
@@ -109,7 +112,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   }, [defaultPrompt, documentIds]);
 
   const handleSourceClick = useCallback((summaryId: string | null, sourceId: string | null) => {
-    trrack.apply('Clicked', actions.mouseHoverAction({ summaryId, sourceId }));
+    trrack.apply('Clicked', actions.sourceClickAction({ documentId: activeDocumentId, summaryId, sourceId }));
 
     setAnswer({
       status: true,
@@ -119,7 +122,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
     setActiveSummaryBlockId(summaryId);
     setActiveSourceBlockId(sourceId);
-  }, [actions, trrack, setAnswer]);
+  }, [actions, trrack, setAnswer, activeDocumentId]);
 
   const handleSummaryBadgePositionChange = useCallback((top: number) => {
     setSummaryBadgeTop(top);
@@ -266,7 +269,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     setActiveDocumentId(documentId);
     setActiveSummaryBlockId(null);
     setActiveSourceBlockId(null);
-  }, []);
+    trrack.apply('Clicked', actions.sourceClickAction({ documentId: activeDocumentId, summaryId: null, sourceId: null }));
+  }, [actions, trrack, activeDocumentId]);
 
   return (
     <>
