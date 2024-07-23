@@ -60,7 +60,16 @@
                 "documents": ["1_summary.json", "2_summary.json", "3_summary.json", "4_summary.json", "5_summary.json", "6_summary.json", "7_summary.json"],
                 "prompt": "Summarize this document in 5 sentences.",
                 "hallucination": false
-            }            
+            }, 
+        },
+        "summshaper2": {
+            "baseComponent": "summarySource",
+            "instruction": "",
+            "parameters": {
+                "documents": ["1_cyber_summary.json", "2_cyber_summary.json"],
+                "prompt": "Summarize this document in 5 sentences.",
+                "hallucination": false
+            }
         }
     },
     "sequence": {
@@ -71,7 +80,8 @@
             {
                 "order": "random",
                 "components": [
-                    "summshaper1"
+                    "summshaper1",
+                    "summshaper2"
                 ]
             }
         ]
