@@ -47,13 +47,8 @@
                 }
             ]
         },
-        "tutorial": {
-            "type": "markdown",
-            "path": "sumshaper/assets/tutorial.md",
-            "nextButtonText": "Begin",
-            "response": []
-        },
-        "summshaper1": {
+
+        "Intel-Multidoc": {
             "baseComponent": "summarySource",
             "instruction": "",
             "parameters": {
@@ -62,7 +57,7 @@
                 "hallucination": false
             } 
         },
-        "summshaper2": {
+        "Cyber-Multidoc": {
             "baseComponent": "summarySource",
             "instruction": "",
             "parameters": {
@@ -71,27 +66,53 @@
                 "hallucination": false
             }
         },
-        "summshaper3": {
+        "Chinese-Transcript-Multidoc": {
             "baseComponent": "summarySource",
             "instruction": "",
             "parameters": {
                 "documents": ["1_interview_summary.json", "2_interview_summary.json", "3_interview_summary.json", "4_interview_summary.json"],
                 "prompt": "Summarize this document in 5 sentences.",
-                "hallucination": true
+                "hallucination": false
             }
+        }, 
+        "Farsi-Russian-emails-Multidoc": {
+            "baseComponent": "summarySource",
+            "instruction": "",
+            "parameters": {
+                "documents": ["1_farsi_email.json", "2_farsi_email.json", "3_farsi_email.json", "4_farsi_email.json", "5_farsi_email.json", "6_farsi_email.json"],
+                "prompt": "Summarize this document in 5 sentences. Group the summary based on content as the documents may not be related. Use multiple paragraph if that is the case.",
+                "hallucination": false
+            }
+        }, 
+        "survey": {
+            "type": "markdown",
+            "path": "sumshaper/assets/survey.md",
+            "response": [
+                {
+                    "id": "surveyAnything",
+                    "prompt": "Plese share any feedback or comments you have about the work. We would love to hear from you! ",
+                    "required": false,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your feedback here. The textbox will expand as you type."
+                }
+            ]
         }
     },
     "sequence": {
         "order": "fixed",
         "components": [
             "introduction",
-            "tutorial",
             {
                 "order": "fixed",
                 "components": [
-                    "summshaper1",
-                    "summshaper2", 
-                    "summshaper3"
+                    "Intel-Multidoc",
+                    "Cyber-Multidoc",
+                    "Chinese-Transcript-Multidoc",
+                    "Farsi-Russian-emails-Multidoc", 
+                    "survey"
+
+                
                 ]
             }
         ]
