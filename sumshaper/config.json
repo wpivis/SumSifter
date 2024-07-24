@@ -80,7 +80,7 @@
             "instruction": "",
             "parameters": {
                 "documents": ["1_farsi_email.json", "2_farsi_email.json", "3_farsi_email.json", "4_farsi_email.json", "5_farsi_email.json", "6_farsi_email.json"],
-                "prompt": "Summarize this document in 5 sentences. Group the summary based on content as the documents may not be related. Use multiple paragraph if that is the case.",
+                "prompt": "Summarize this document in 5 sentences. ",
                 "hallucination": false
             }
         }, 
@@ -90,7 +90,7 @@
             "response": [
                 {
                     "id": "surveyAnything",
-                    "prompt": "Plese share any feedback or comments you have about the work. We would love to hear from you! ",
+                    "prompt": "Please share any feedback or comments you have about the work. We would love to hear from you! ",
                     "required": false,
                     "location": "belowStimulus",
                     "type": "longText",
