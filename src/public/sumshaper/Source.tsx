@@ -408,15 +408,21 @@ function Source({
         opened={emailModalVisible}
         onClose={() => setEmailModalVisible(false)}
         title="AI Generated Email Content"
+        size="xl" // Add this line to increase the modal size
+        styles={{
+          modal: { maxWidth: '90%', maxHeight: '90%' }, // Adjust the width and height as needed
+          body: { padding: '20px' }, // Adjust the padding if needed
+        }}
       >
         <Textarea
           readOnly
           value={emailContent || ''}
           rows={20}
-          style={{ width: '100%' }}
+          style={{ width: '100%', height: '500px', marginBottom: '5px' }}
         />
-        <Button onClick={() => setEmailModalVisible(false)}>Close</Button>
+        <Button onClick={() => setEmailModalVisible(false)} style={{ marginTop: '5px' }}>Close</Button>
       </Modal>
+
     </>
   );
 }
