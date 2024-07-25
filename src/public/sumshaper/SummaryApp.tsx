@@ -106,6 +106,14 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       setLocalSummaries(summaryList);
       setSources(sourceList);
       setIsLoading(false);
+
+      // get the first source document id and set it as active
+      for (let i = 0; i < individualDocuments.length; i += 1) {
+        if (individualDocuments[i].source.length > 0) {
+          setActiveDocumentId(i);
+          break;
+        }
+      }
     }
 
     fetchData();
