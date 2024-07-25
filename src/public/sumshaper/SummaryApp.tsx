@@ -379,6 +379,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
           </ScrollArea>
           {activeDocumentId !== null && (
             <Summary
+              key={activeDocumentId}
               conversationId={localSummaries[activeDocumentId].conversationId}
               sentences={localSummaries[activeDocumentId].content}
               onSummaryBadgePositionChange={handleSummaryBadgePositionChange}
@@ -395,6 +396,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         <Grid.Col span={4}>
           {activeDocumentId !== null && (
             <Source
+              key={activeDocumentId}
               conversationId={localSummaries[activeDocumentId].conversationId}
               sourceList={sources[activeDocumentId].content}
               onSourceBadgePositionChange={handleSourceBadgePositionChange}

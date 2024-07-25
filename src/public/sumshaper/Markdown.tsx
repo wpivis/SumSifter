@@ -155,8 +155,29 @@ function CustomMarkdown({
   onSourceClick?: (elem: HTMLDivElement | null, id: string | null, sourceId: string | null) => void;
   onActiveRefChange?: (_: HTMLDivElement | null) => void;
 }) {
+  const [wasUpdated, setWasUpdated] = useState(false);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      return () => {};
+    }
+    setWasUpdated(true);
+    const t = setTimeout(() => {
+      setWasUpdated(false);
+    }, 1000);
+
+    return () => {
+      clearTimeout(t);
+    };
+  }, [data, isFirstRender]);
+
+  useEffect(() => {
+    isFirstRender.current = false;
+  }, []);
+
   return (
-    <div>
+    <div className={`${style.markdownContent} ${wasUpdated ? style.markdownHighlight : ''}`}>
       {data.map((item, index) => {
         if (item.text === '\n') {
           return (
