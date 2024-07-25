@@ -1,19 +1,26 @@
 import {
   memo, useCallback, useEffect, useMemo, useState,
 } from 'react';
+import { IconX, IconCheck } from '@tabler/icons-react';
 import {
-  Box, Flex, Grid, Loader, ScrollArea,
+  Box, Flex, Grid, Loader, Notification, rem, ScrollArea,
 } from '@mantine/core';
 import { initializeTrrack, Registry } from '@trrack/core';
+import { createPortal } from 'react-dom';
 import Summary from './Summary';
 import { StimulusParams } from '../../store/types';
 import {
+  NotificationMessage,
   SumGlobalSummary, SumParams, SumSource, SumSummary,
 } from './types';
 import Source from './Source';
 import GlobalSummary from './GlobalSummary';
+import style from './sumsifter.module.css';
 
 const API_BASE_URL = import.meta.env.VITE_SUMSIFTER_API_URL;
+
+const xIcon = <IconX style={{ width: rem(20), height: rem(20) }} />;
+const checkIcon = <IconCheck style={{ width: rem(20), height: rem(20) }} />;
 
 function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [activeSummaryBlockId, setActiveSummaryBlockId] = useState<string | null>(null);
@@ -30,12 +37,31 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [localSummaries, setLocalSummaries] = useState<SumSummary[]>([]);
   const [sources, setSources] = useState<SumSource[]>([]);
 
+  const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
+
   const [activeDocumentId, setActiveDocumentId] = useState<number | null>(null);
 
   const { prompt: defaultPrompt, documents: _documentIds } = parameters;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const documentIds = useMemo(() => _documentIds, []);
+
+  const addNotification = useCallback((title: string, type: 'success' | 'failure', content: string) => {
+    setNotifications((n) => {
+      const _id = Math.floor(Math.random() * (10000 - 1) + 1);
+      setTimeout(() => {
+        setNotifications(((nn) => nn.filter((a) => a.id !== _id)));
+      }, 4000);
+
+      return [...n, {
+        id: _id,
+        content,
+        title,
+        type,
+      },
+      ];
+    });
+  }, []);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -67,18 +93,29 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId: null,
-          documentIds,
-          promptType: 'general',
-          prompt: defaultPrompt,
-        }),
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversationId: null,
+            documentIds,
+            promptType: 'general',
+            prompt: defaultPrompt,
+          }),
+        });
+      } catch (e) {
+        addNotification(
+          'Failed',
+          'failure',
+          'Unable to generate global summary. Please try again.',
+        );
+        setIsLoading(false);
+        return;
+      }
 
       const { summary, conversationId: globalConversationId, individualDocuments } = await response.json();
 
@@ -107,6 +144,12 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       setSources(sourceList);
       setIsLoading(false);
 
+      addNotification(
+        'Success',
+        'success',
+        'Global summary generated successfully.',
+      );
+
       // get the first source document id and set it as active
       for (let i = 0; i < individualDocuments.length; i += 1) {
         if (individualDocuments[i].source.length > 0) {
@@ -117,7 +160,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     }
 
     fetchData();
-  }, [defaultPrompt, documentIds]);
+  }, [defaultPrompt, addNotification, documentIds]);
 
   const handleSourceClick = useCallback((summaryId: string | null, sourceId: string | null) => {
     trrack.apply('Clicked', actions.sourceClickAction({ documentId: activeDocumentId, summaryId, sourceId }));
@@ -144,18 +187,29 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const handleSubmitGlobalQuery = useCallback((conversationId: string, queryPrompt: string) => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId,
-          documentIds: [],
-          promptType: 'general',
-          prompt: queryPrompt,
-        }),
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversationId,
+            documentIds: [],
+            promptType: 'general',
+            prompt: queryPrompt,
+          }),
+        });
+      } catch (e) {
+        addNotification(
+          'Failed',
+          'failure',
+          'Unable to generate global summary. Please try again.',
+        );
+        setIsLoading(false);
+        return;
+      }
 
       const { summary, conversationId: globalConversationId } = await response.json();
 
@@ -166,27 +220,43 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       });
 
       setIsLoading(false);
+      addNotification(
+        'Success',
+        'success',
+        'Global summary generated successfully.',
+      );
     }
 
     fetchData();
-  }, []);
+  }, [addNotification]);
 
   const handleUpdateGlobalSummary = useCallback((conversationId: string, summaryText: string, sourcePrompt: string) => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId,
-          documentIds: [],
-          promptType: 'summary',
-          summaryTargetText: summaryText,
-          prompt: sourcePrompt,
-        }),
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/summaries/generate-multiple/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversationId,
+            documentIds: [],
+            promptType: 'summary',
+            summaryTargetText: summaryText,
+            prompt: sourcePrompt,
+          }),
+        });
+      } catch (e) {
+        addNotification(
+          'Failed',
+          'failure',
+          'Unable to generate global summary. Please try again.',
+        );
+        setIsLoading(false);
+        return;
+      }
 
       const { summary, conversationId: globalConversationId } = await response.json();
 
@@ -197,25 +267,41 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       });
 
       setIsLoading(false);
+      addNotification(
+        'Success',
+        'success',
+        'Global summary generated successfully.',
+      );
     }
 
     fetchData();
-  }, []);
+  }, [addNotification]);
 
   const handleSubmitLocalQuery = useCallback((conversationId: string, queryPrompt: string) => {
     async function fetchData() {
-      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId,
-          documentId: null,
-          promptType: 'general',
-          prompt: queryPrompt,
-        }),
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversationId,
+            documentId: null,
+            promptType: 'general',
+            prompt: queryPrompt,
+          }),
+        });
+      } catch (e) {
+        addNotification(
+          'Failed',
+          'failure',
+          'Unable to generate local summary. Please try again.',
+        );
+        setIsLoading(false);
+        return;
+      }
       const data = await response.json();
 
       // update local summary
@@ -229,27 +315,43 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         return docSummary;
       }));
       setIsLoading(false);
+      addNotification(
+        'Success',
+        'success',
+        'Local summary generated successfully.',
+      );
     }
 
     fetchData();
-  }, []);
+  }, [addNotification]);
 
   const handleUpdateSummary = useCallback((conversationId: string, summaryText: string, sourcePrompt: string) => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId,
-          documentId: null,
-          promptType: 'summary',
-          summaryTargetText: summaryText,
-          prompt: sourcePrompt,
-        }),
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversationId,
+            documentId: null,
+            promptType: 'summary',
+            summaryTargetText: summaryText,
+            prompt: sourcePrompt,
+          }),
+        });
+      } catch (e) {
+        addNotification(
+          'Failed',
+          'failure',
+          'Unable to generate local summary. Please try again.',
+        );
+        setIsLoading(false);
+        return;
+      }
       const data = await response.json();
 
       // update local summary
@@ -264,27 +366,43 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       }));
 
       setIsLoading(false);
+      addNotification(
+        'Success',
+        'success',
+        'Local summary generated successfully.',
+      );
     }
 
     fetchData();
-  }, []);
+  }, [addNotification]);
 
   const handleAddToLocalSummary = useCallback((conversationId:string, sourceText: string, sourcePrompt: string) => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId,
-          documentId: null,
-          promptType: 'source',
-          sourceTargetText: sourceText,
-          prompt: sourcePrompt,
-        }),
-      });
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversationId,
+            documentId: null,
+            promptType: 'source',
+            sourceTargetText: sourceText,
+            prompt: sourcePrompt,
+          }),
+        });
+      } catch (e) {
+        addNotification(
+          'Failed',
+          'failure',
+          'Unable to generate local summary. Please try again.',
+        );
+        setIsLoading(false);
+        return;
+      }
       const data = await response.json();
 
       // update local summary
@@ -299,10 +417,15 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       }));
 
       setIsLoading(false);
+      addNotification(
+        'Success',
+        'success',
+        'Local summary generated successfully.',
+      );
     }
 
     fetchData();
-  }, []);
+  }, [addNotification]);
 
   const updateActiveDocumentId = useCallback((documentId: number) => {
     setActiveDocumentId(documentId);
@@ -313,6 +436,43 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
   return (
     <>
+      {createPortal(
+        <div className={style.notificationContainer}>
+          {notifications.map((notificationMessage) => {
+            if (notificationMessage.type === 'success') {
+              return (
+                <Notification
+                  key={notificationMessage.id}
+                  icon={checkIcon}
+                  bg="var(--mantine-color-green-1)"
+                  color="green"
+                  title={notificationMessage.title}
+                  w={400}
+                  withCloseButton={false}
+                  className={style.notification}
+                >
+                  {notificationMessage.content}
+                </Notification>
+              );
+            }
+            return (
+              <Notification
+                key={notificationMessage.id}
+                icon={xIcon}
+                bg="var(--mantine-color-red-1)"
+                color="red"
+                title={notificationMessage.title}
+                w={400}
+                withCloseButton={false}
+                className={style.notification}
+              >
+                {notificationMessage.content}
+              </Notification>
+            );
+          })}
+        </div>,
+        document.body,
+      )}
       {isLoading && (
         <div style={{
           position: 'fixed',

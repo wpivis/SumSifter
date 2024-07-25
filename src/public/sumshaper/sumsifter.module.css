@@ -132,3 +132,14 @@
 .markdownHighlight {
   background-color: var(--mantine-color-green-1);
 }
+
+.notificationContainer {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  z-index: 2000;
+}
+
+.notification {
+  margin-bottom: 10px;
+}

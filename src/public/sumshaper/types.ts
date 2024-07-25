@@ -35,5 +35,11 @@ export interface SumGlobalSummary {
   id: number;
   conversationId: string;
   content: SumContent[];
+}
 
+export interface NotificationMessage {
+  id: number,
+  type: 'success' | 'failure'
+  title: string;
+  content: string;
 }
