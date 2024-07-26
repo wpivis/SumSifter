@@ -39,6 +39,7 @@ function Source({
   const [issuesModalVisible, setIssuesModalVisible] = React.useState(false);
   const [emailContent, setEmailContent] = React.useState<string | null>(null);
   const [emailModalVisible, setEmailModalVisible] = React.useState(false);
+  const [imageDetails, setImageDetails] = React.useState<string | null>(null);
 
   useEffect(() => {
     if (ref.current) {
@@ -204,7 +205,32 @@ function Source({
 
   const handlePrintIssues = useCallback(() => {
     setIssuesModalVisible(true);
-  }, [issues]);
+  }, []);
+
+  const handleImageSelection = useCallback((e) => {
+    async function getImageDetails(src: string) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/summaries/explain_chart/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            // imageUrl: src,
+            imageUrl: 'https://gcdnb.pbrd.co/images/NYayhBxGPSsE.png?o=1',
+          }),
+        });
+
+        const data = await response.json();
+        setImageDetails(data);
+        // console.log(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    getImageDetails(e.src);
+  }, []);
 
   return (
     <>
@@ -246,6 +272,7 @@ function Source({
               activeId={activeSourceId}
               activeSourceId={null}
               onActiveRefChange={handleActiveRefChange}
+              onImageSelection={handleImageSelection}
             />
           </Box>
 

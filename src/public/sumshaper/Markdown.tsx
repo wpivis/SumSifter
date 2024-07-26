@@ -7,6 +7,8 @@ import {
 } from 'react';
 import style from './sumsifter.module.css';
 
+const API_BASE_URL = import.meta.env.VITE_SUMSIFTER_API_URL;
+
 function SourceItem({
   source, isBlockHovered, setIsBlockHovered, onClick, active,
 }: {
@@ -37,7 +39,13 @@ function SourceItem({
   );
 }
 
-function ReactMarkdown({ text }: { text: string}) {
+function ReactMarkdown({ text, onImageSelection }: { text: string, onImageSelection?: (_: HTMLImageElement) => void }) {
+  const handleImageSelection = useCallback((e: React.MouseEvent<HTMLImageElement>) => {
+    if (onImageSelection) {
+      onImageSelection(e.currentTarget);
+    }
+  }, [onImageSelection]);
+
   return (
     <Markdown
       rehypePlugins={[rehypeRaw, remarkGfm]}
@@ -58,6 +66,12 @@ function ReactMarkdown({ text }: { text: string}) {
           const { node, ...rest } = props;
           return <table className={style.markdownTable} {...rest} />;
         },
+        // eslint-disable-next-line react/no-unstable-nested-components
+        img: (props) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars, react/prop-types
+          const { node, src, ...rest } = props;
+          return <img style={{ width: '100%' }} src={`${API_BASE_URL}/${src}`} {...rest} onClick={handleImageSelection} />;
+        },
       }}
     >
       {text}
@@ -73,6 +87,7 @@ function MarkdownElement({
   activeSourceId,
   onSourceClick,
   onActiveRefChange,
+  onImageSelection,
 }: {
   element: {
     id: string;
@@ -87,6 +102,7 @@ function MarkdownElement({
   active: boolean;
   activeSourceId: string | null;
   onActiveRefChange?: (_: HTMLDivElement | null) => void;
+  onImageSelection?: (_: HTMLImageElement) => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -120,7 +136,10 @@ function MarkdownElement({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <MemoizedReactMarkdown text={element.text} />
+        <MemoizedReactMarkdown
+          text={element.text}
+          onImageSelection={onImageSelection}
+        />
       </div>
 
       {((element.sources?.length ?? 0) > 0)
@@ -148,12 +167,14 @@ function CustomMarkdown({
   activeSourceId,
   onSourceClick,
   onActiveRefChange,
+  onImageSelection,
 }: {
   data:{ id: string; text: string; sources?: string[] }[];
   activeId: string | null;
   activeSourceId: string | null;
   onSourceClick?: (elem: HTMLDivElement | null, id: string | null, sourceId: string | null) => void;
   onActiveRefChange?: (_: HTMLDivElement | null) => void;
+  onImageSelection?: (_: HTMLImageElement) => void;
 }) {
   const [wasUpdated, setWasUpdated] = useState(false);
   const isFirstRender = useRef(true);
@@ -196,6 +217,7 @@ function CustomMarkdown({
             active={isActive}
             activeSourceId={isActive ? activeSourceId : null}
             onActiveRefChange={onActiveRefChange}
+            onImageSelection={onImageSelection}
           />
         );
       })}
