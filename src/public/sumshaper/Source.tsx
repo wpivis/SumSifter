@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   IconArrowBack, IconCirclePlus, IconPencil, IconNotebook, IconWritingSign, IconMail,
   IconList,
+  IconBulb,
 } from '@tabler/icons-react';
 import {
   Title, ScrollArea, Badge, Input, ActionIcon, Tooltip, Divider, Box, Modal, Textarea, Button,
@@ -40,6 +41,8 @@ function Source({
   const [emailContent, setEmailContent] = React.useState<string | null>(null);
   const [emailModalVisible, setEmailModalVisible] = React.useState(false);
   const [imageDetails, setImageDetails] = React.useState<string | null>(null);
+  const activeImageRef = React.useRef<HTMLImageElement | null>(null);
+  const [hasUserImageSelection, setHasUserImageSelection] = React.useState(false);
 
   useEffect(() => {
     if (ref.current) {
@@ -207,29 +210,49 @@ function Source({
     setIssuesModalVisible(true);
   }, []);
 
-  const handleImageSelection = useCallback((e) => {
-    async function getImageDetails(src: string) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/summaries/explain_chart/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            // imageUrl: src,
-            imageUrl: 'https://gcdnb.pbrd.co/images/NYayhBxGPSsE.png?o=1',
-          }),
-        });
-
-        const data = await response.json();
-        setImageDetails(data);
-        // console.log(data);
-      } catch (err) {
-        console.error(err);
-      }
+  const handleExplainFigure = useCallback(async () => {
+    const src = activeImageRef.current?.src;
+    if (!src) {
+      return;
     }
+    try {
+      setImageDetails('Loading...');
+      const response = await fetch(`${API_BASE_URL}/summaries/explain_chart/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: src,
+        }),
+      });
 
-    getImageDetails(e.src);
+      const data = await response.json();
+      setImageDetails(data.explanation);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const handleImageSelection = useCallback((e: HTMLImageElement) => {
+    if (activeImageRef.current) {
+      activeImageRef.current.classList.remove(style.markdownImageActive);
+    }
+    activeImageRef.current = e;
+    e.classList.add(style.markdownImageActive);
+    setUserSelectionRect(e.getBoundingClientRect());
+    setHasUserImageSelection(true);
+
+    const ev = () => {
+      setHasUserImageSelection(false);
+      activeImageRef.current?.classList.remove(style.markdownImageActive);
+    };
+
+    window.addEventListener('mousedown', ev);
+
+    return () => {
+      window.removeEventListener('mousedown', ev);
+    };
   }, []);
 
   return (
@@ -275,6 +298,23 @@ function Source({
               onImageSelection={handleImageSelection}
             />
           </Box>
+          {hasUserImageSelection && (
+            <div
+              className={style.sourceContextPopup}
+              style={{
+                top: userSelectionActionBox.bottom,
+                left: userSelectionActionBox.left,
+                width: 100,
+              }}
+              onMouseDown={(e) => { e.stopPropagation(); }}
+            >
+              <Tooltip label="Explain this figure" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+                <ActionIcon variant="transparent" size="md" color="gray" onClick={handleExplainFigure}>
+                  <IconBulb />
+                </ActionIcon>
+              </Tooltip>
+            </div>
+          )}
 
           {userSelection && (
             <div
@@ -365,6 +405,18 @@ function Source({
         </div>
       </ScrollArea>
 
+      <Modal
+        zIndex={1000}
+        opened={!!imageDetails}
+        onClose={() => {
+          setImageDetails(null);
+          setHasUserImageSelection(false);
+          activeImageRef.current?.classList.remove(style.markdownImageActive);
+        }}
+        title="Image Description"
+      >
+        {imageDetails}
+      </Modal>
       <Modal
         opened={popupVisible}
         onClose={() => setPopupVisible(false)}
